@@ -4,6 +4,11 @@ import { resolve } from 'node:path';
 
 const fixturePath = resolve('tests/fixtures/liana-v9-signet-single-primary-recovery.json');
 describe('CLI', () => {
+  it('lists a watch-only change address from a fixture file', () => {
+    const output = execFileSync(resolve('node_modules/.bin/tsx'), ['src/cli.ts', '--network', 'signet', '--descriptor-file', fixturePath, '--branch', 'change', '--start', '0', '--count', '1'], { encoding: 'utf8' });
+    const parsed = JSON.parse(output) as { addresses: Array<{ address: string; index: number; branch: string }> };
+    expect(parsed.addresses[0]).toMatchObject({ address: 'tb1prn8cy7j5q8sc2g7ahgexmjfxauwvluvp7m80gvw9rzzrdnpculpsw6h524', index: 0, branch: 'change' });
+  });
   it('lists a watch-only receive address range as JSON without printing the descriptor', () => {
     const output = execFileSync(resolve('node_modules/.bin/tsx'), ['src/cli.ts', '--network', 'signet', '--descriptor-file', fixturePath, '--branch', 'receive', '--start', '0', '--count', '1'], { encoding: 'utf8' });
     const parsed = JSON.parse(output) as { addresses: Array<{ address: string; scriptPubKey: string; index: number; branch: string }> };
