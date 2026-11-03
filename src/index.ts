@@ -6,3 +6,4 @@ export interface DerivedAddress { address: string; scriptPubKey: Uint8Array; bra
 export { deriveAccountXpub, deriveChildKey, importAccountXpub, mnemonicToSeed } from './bip32.js';
 export { descriptorChecksum, parseMultipath, splitDescriptorChecksum } from './descriptors.js';
 export { deriveDescriptorAddress } from './address.js';
+export { parseLianaDescriptor } from './liana.js';

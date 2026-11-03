@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { descriptorChecksum, splitDescriptorChecksum, parseMultipath, deriveDescriptorAddress } from '../src/index.js';
+import { descriptorChecksum, splitDescriptorChecksum, parseMultipath, deriveDescriptorAddress, parseLianaDescriptor } from '../src/index.js';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
@@ -31,6 +31,17 @@ describe('descriptor primitives', () => {
     expect(fixture.change.addresses0to9).toHaveLength(10);
     for (const [index, address] of fixture.receive.addresses0to9.entries()) expect(deriveDescriptorAddress(fixture.receive.descriptor, index, 'signet').address).toBe(address);
     for (const [index, address] of fixture.change.addresses0to9.entries()) expect(deriveDescriptorAddress(fixture.change.descriptor, index, 'signet').address).toBe(address);
+  });
+  it('imports a descriptor without rewriting it and extracts signer origins', () => {
+    const wallet = parseLianaDescriptor(fixture.receive.descriptor, 'signet');
+    expect(wallet.original).toBe(fixture.receive.descriptor);
+    expect(wallet.checksum).toBe('22y0dhdd');
+    expect(wallet.network).toBe('signet');
+    expect(wallet.signers).toHaveLength(2);
+    expect(wallet.signers[0]).toMatchObject({ masterFingerprint: '07fd816d', originPath: "m/48'/1'/0'/2'", network: 'signet' });
+  });
+  it('rejects a descriptor with a modified checksum', () => {
+    expect(() => parseLianaDescriptor(fixture.receive.descriptor.replace('#22y0dhdd', '#00000000'), 'signet')).toThrow(/checksum/i);
   });
   it('splits a descriptor and verifies its checksum without changing its body', () => {
     expect(splitDescriptorChecksum('raw(deadbeef)#89f8spxm')).toEqual({ body: 'raw(deadbeef)', checksum: '89f8spxm' });
