@@ -111,4 +111,10 @@ fn main() {
     assert!(matches!(inferred_policy.recovery_paths().get(&3), Some(PathInfo::Multi(2, keys)) if keys.len() == 3));
     assert!(matches!(inferred_policy.recovery_paths().get(&6), Some(PathInfo::Multi(3, keys)) if keys.len() == 3));
     emit_on_network("signet-v2-bip32-derivs", signet_v2, Network::Signet, &secp);
+
+    let nested_threshold = format!(
+        "wsh(or_d(thresh(1,thresh(1,pkh({}),pkh({})),pkh({})),and_v(v:pkh({}),older(36))))",
+        key(&roots, 0, 0), key(&roots, 1, 0), key(&roots, 2, 0), key(&roots, 1, 1),
+    );
+    assert!(LianaDescriptor::from_str(&nested_threshold).is_err(), "nested B-type threshold must fail Miniscript type checking");
 }
