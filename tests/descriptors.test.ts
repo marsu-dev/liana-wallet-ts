@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { descriptorChecksum, splitDescriptorChecksum, parseMultipath, deriveDescriptorAddress, parseLianaDescriptor, deriveWalletAddress, WalletDerivationError } from '../src/index.js';
+import { descriptorChecksum, splitDescriptorChecksum, parseMultipath, deriveDescriptorAddress, parseLianaDescriptor, deriveWalletAddress, WalletDerivationError, constructUnspendableInternalXpub } from '../src/index.js';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { createHash } from 'node:crypto';
 
 const fixture = JSON.parse(readFileSync(resolve('tests/fixtures/liana-v9-signet-single-primary-recovery.json'), 'utf8')) as {
   receive: { descriptor: string; addressIndex0: string; scriptPubKeyIndex0: string; addresses0to9: string[] };
@@ -38,6 +39,21 @@ describe('descriptor primitives', () => {
     const wallet = parseLianaDescriptor(multipath, 'signet');
     expect(deriveWalletAddress(wallet, 'receive', 0).address).toBe(fixture.receive.addressIndex0);
     expect(deriveWalletAddress(wallet, 'change', 0).address).toBe(fixture.change.addressIndex0);
+  });
+  it('builds a NUMS internal xpub from ordered input extended public keys', () => {
+    const wallet = parseLianaDescriptor(fixture.receive.descriptor, 'signet');
+    const result = constructUnspendableInternalXpub(wallet.signers.map((signer) => signer.xpub), 'signet');
+    expect(Buffer.from(result.publicKey).toString('hex')).toBe('0250929b74c1a04954b78b4b6035e97a5e078a5a0f28ec96d547bfee9ace803ac0');
+    expect(Buffer.from(result.chainCode).toString('hex')).toBe('cbbedbf9f2a95f56939a8607ea0242b3ca29370ac03b8831b4c976a4d812ca54');
+    expect(result.xpub).toBe('tpubD6NzVbkrYhZ4YNGrVH69p4DDGAAdXQZzQ4oYnZH64K1ct62aX21QWWEvLE566i3VXFtURY8cdVFU1rypo4KDjVfmoEiUqDkSrPaxVab1UA2');
+    expect(result.descriptorKey).toBe(`${result.xpub}/<0;1>/*`);
+  });
+  it('includes repeated public keys in the NUMS chain-code hash', () => {
+    const wallet = parseLianaDescriptor(fixture.receive.descriptor, 'signet');
+    const pub = Buffer.from('03f8178a5ccdfb39ed0c3d8088970b0d7e1f0c27a24dad0e2d2865c43dae2b9a09', 'hex');
+    const expected = createHash('sha256').update(Buffer.concat([pub, pub])).digest('hex');
+    const result = constructUnspendableInternalXpub([wallet.signers[0]!.xpub, wallet.signers[0]!.xpub], 'signet');
+    expect(Buffer.from(result.chainCode).toString('hex')).toBe(expected);
   });
   it('reports a typed missing-checksum error', () => {
     const body = fixture.receive.descriptor.slice(0, fixture.receive.descriptor.lastIndexOf('#'));

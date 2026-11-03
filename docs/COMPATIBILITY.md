@@ -10,6 +10,8 @@ Relevant source locations:
 - [`liana/src/descriptors/analysis.rs`](https://github.com/wizardsardine/liana/blob/398e622596e7530a328de3027cb2c09905f708c6/liana/src/descriptors/analysis.rs): policy analysis and `unspendable_internal_xpub`; `bip341_nums` uses compressed point `0250929b74c1a04954b78b4b6035e97a5e078a5a0f28ec96d547bfee9ace803ac0`. The chain code hashes the ordered public-key encodings encountered by walking TapTree leaves and each Miniscript's `iter_pk()`.
 - [`liana/src/descriptors/keys.rs`](https://github.com/wizardsardine/liana/blob/398e622596e7530a328de3027cb2c09905f708c6/liana/src/descriptors/keys.rs): key parsing and derived public-key representation.
 
+The TypeScript package exposes `constructUnspendableInternalXpub` for the fixed NUMS point and ordered-key chain-code construction. Its deterministic serialization/hash behavior is unit-tested, but it is not yet connected to an Liana multisig descriptor fixture and is not a claim of byte-for-byte Rust parity.
+
 ## Signet fixture
 
 `tests/fixtures/liana-v9-signet-single-primary-recovery.json` records the full receive/change descriptors, checksums and the first ten receive/change addresses from the community gist at <https://gist.github.com/jdlcdl/b17c6b551839adb5b7b7d4ef9574e48e>. The source reports Liana v9.0 and uses Bitcoin Core `deriveaddresses`; it is an independent cross-check for a single-key primary path with a 36-block recovery path. It is **not** a multisig or NUMS oracle, nor an upstream Rust-maintained test vector. Mnemonic/private material from the gist is deliberately excluded. The fixture also records the receive index-0 scriptPubKey.

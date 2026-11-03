@@ -8,3 +8,4 @@ export { deriveAccountXpub, deriveChildKey, importAccountXpub, mnemonicToSeed } 
 export { descriptorChecksum, parseMultipath, splitDescriptorChecksum } from './descriptors.js';
 export { deriveDescriptorAddress, deriveWalletAddress } from './address.js';
 export { parseLianaDescriptor } from './liana.js';
+export { constructUnspendableInternalXpub } from './taproot.js';
