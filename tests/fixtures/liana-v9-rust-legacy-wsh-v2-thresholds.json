@@ -1,0 +1,36 @@
+{
+  "id": "liana-v9-rust-legacy-v2-threshold-recoveries-vectors",
+  "provenance": {
+    "lianaVersion": "9.0.0",
+    "lianaCommit": "398e622596e7530a328de3027cb2c09905f708c6",
+    "miniscriptVersion": "11.2.0",
+    "rustc": "1.80.0 (051478957 2024-07-21)",
+    "network": "mainnet",
+    "generator": "LianaDescriptor::from_str over a mainnet-instantiated version of the three-recovery P2WSH shape in pinned liana/src/descriptors/mod.rs::bip32_derivs_pruning; primary 3-of-3, recovery older(3) 2-of-3 and older(6) 3-of-3 with distinct multipath values; policy mapping and Rust outputs asserted",
+    "testKeys": "Descriptor includes only public test xpubs; no seed or private key is stored",
+    "secretsOmitted": true
+  },
+  "descriptor": "wsh(or_i(and_v(v:thresh(3,pkh([4ba43603]xpub661MyMwAqRbcEtUEgdXRTY6dJQG9fRgs7C5QomqETKMYBJVtSGpRqyHSmhWy8snovPd5oWZgQ14zUquxbxu7Z1umuXbN5VDpUL1QobD5xUY/0/<4;5>/*),a:pkh([8dfc9b34]xpub661MyMwAqRbcGFeMhhkrJL6Yj3YKQFNZQSM2BAvoMmhdjNKBh43n5v3c4YT5dFtjkirfhqQHMd22br7cHAQXAV8cZdicedZJkNweja4WWBK/1/<4;5>/*),a:pkh([56c4fac3]xpub661MyMwAqRbcFNWTmtbxHaYsjddAazfBQ51wm61veSzW3z2N7s1U7M9epMGsedj3unJKhXBY2sxWpQutwrZnpFuWe2vVVvLig8nFT4nmG67/2/<4;5>/*)),older(6)),or_d(multi(3,[4ba43603]xpub661MyMwAqRbcEtUEgdXRTY6dJQG9fRgs7C5QomqETKMYBJVtSGpRqyHSmhWy8snovPd5oWZgQ14zUquxbxu7Z1umuXbN5VDpUL1QobD5xUY/0/<0;1>/*,[8dfc9b34]xpub661MyMwAqRbcGFeMhhkrJL6Yj3YKQFNZQSM2BAvoMmhdjNKBh43n5v3c4YT5dFtjkirfhqQHMd22br7cHAQXAV8cZdicedZJkNweja4WWBK/1/<0;1>/*,[56c4fac3]xpub661MyMwAqRbcFNWTmtbxHaYsjddAazfBQ51wm61veSzW3z2N7s1U7M9epMGsedj3unJKhXBY2sxWpQutwrZnpFuWe2vVVvLig8nFT4nmG67/2/<0;1>/*),and_v(v:thresh(2,pkh([4ba43603]xpub661MyMwAqRbcEtUEgdXRTY6dJQG9fRgs7C5QomqETKMYBJVtSGpRqyHSmhWy8snovPd5oWZgQ14zUquxbxu7Z1umuXbN5VDpUL1QobD5xUY/0/<2;3>/*),a:pkh([8dfc9b34]xpub661MyMwAqRbcGFeMhhkrJL6Yj3YKQFNZQSM2BAvoMmhdjNKBh43n5v3c4YT5dFtjkirfhqQHMd22br7cHAQXAV8cZdicedZJkNweja4WWBK/1/<2;3>/*),a:pkh([56c4fac3]xpub661MyMwAqRbcFNWTmtbxHaYsjddAazfBQ51wm61veSzW3z2N7s1U7M9epMGsedj3unJKhXBY2sxWpQutwrZnpFuWe2vVVvLig8nFT4nmG67/2/<2;3>/*)),older(3)))))#l3mpszfa",
+  "expected": {
+    "receive": {
+      "0": {
+        "address": "bc1qjzhpgj6a9q3u8wdry695uw5svw26uhthcdsa6kl46lsldnta695qjhppv9",
+        "scriptPubKey": "002090ae144b5d2823c3b9a3268b4e3a906395ae5d77c361dd5bf5d7e1f6cd7dd168"
+      },
+      "1": {
+        "address": "bc1qwnr2thk7wm8htkwsvmcddqdcsvwtqflk8q2pjwsuh08jvzk2m2rs0ks58a",
+        "scriptPubKey": "002074c6a5dede76cf75d9d066f0d681b8831cb027f63814193a1cbbcf260acada87"
+      }
+    },
+    "change": {
+      "0": {
+        "address": "bc1qdacwj7pw63az7x9ljqvvfs5zlvcmu0wh6jhxkqrupevd4cag46cqlvwf4y",
+        "scriptPubKey": "00206f70e9782ed47a2f18bf9018c4c282fb31be3dd7d4ae6b007c0e58dae3a8aeb0"
+      },
+      "1": {
+        "address": "bc1q8dxkfj80z75h2a5jzen4pcgxgyv5va9q8kfvlvc5t0dcwy2ayqass6v25u",
+        "scriptPubKey": "00203b4d64c8ef17a9757692166750e10641194674a03d92cfb3145bdb87115d203b"
+      }
+    }
+  }
+}

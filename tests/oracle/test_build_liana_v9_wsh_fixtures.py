@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 
 BUILDER = Path(__file__).with_name("build_liana_v9_wsh_fixtures.py")
-CASE_IDS = ["legacy-single-primary-recovery", "legacy-2-of-3-primary-recovery", "legacy-multiple-recovery", "legacy-andor"]
+CASE_IDS = ["legacy-single-primary-recovery", "legacy-2-of-3-primary-recovery", "legacy-multiple-recovery", "legacy-andor", "legacy-v2-threshold-recoveries"]
 
 
 class LegacyWshFixtureBuilderTests(unittest.TestCase):

@@ -23,6 +23,11 @@ fn key(roots: &[RootKey], root: usize, purpose: u32) -> DescriptorPublicKey {
     DescriptorPublicKey::from_str(&format!("[{}]{}/{}/<0;1>/*", key.fingerprint, key.xpub, purpose)).expect("valid multipath key")
 }
 
+fn key_with_branches(roots: &[RootKey], root: usize, purpose: u32, branches: &str) -> String {
+    let key = &roots[root];
+    format!("[{}]{}/{}/<{branches}>/*", key.fingerprint, key.xpub, purpose)
+}
+
 fn multi(roots: &[RootKey], purpose: u32, threshold: usize) -> PathInfo {
     PathInfo::Multi(threshold, (0..3).map(|root| key(roots, root, purpose)).collect())
 }
@@ -78,4 +83,18 @@ fn main() {
         _ => panic!("expected the first andor argument to be the recovery key"),
     }
     emit("legacy-andor", andor, &secp);
+
+    let liana_v2_body = format!(
+        "wsh(or_i(and_v(v:thresh(3,pkh({}),a:pkh({}),a:pkh({})),older(6)),or_d(multi(3,{},{},{}),and_v(v:thresh(2,pkh({}),a:pkh({}),a:pkh({})),older(3)))))",
+        key_with_branches(&roots, 0, 0, "4;5"), key_with_branches(&roots, 1, 1, "4;5"), key_with_branches(&roots, 2, 2, "4;5"),
+        key_with_branches(&roots, 0, 0, "0;1"), key_with_branches(&roots, 1, 1, "0;1"), key_with_branches(&roots, 2, 2, "0;1"),
+        key_with_branches(&roots, 0, 0, "2;3"), key_with_branches(&roots, 1, 1, "2;3"), key_with_branches(&roots, 2, 2, "2;3"),
+    );
+    let liana_v2 = LianaDescriptor::from_str(&liana_v2_body).expect("valid Liana v2 threshold recovery descriptor");
+    let inferred_policy = liana_v2.policy();
+    assert!(matches!(inferred_policy.primary_path(), PathInfo::Multi(3, keys) if keys.len() == 3));
+    assert_eq!(inferred_policy.recovery_paths().keys().copied().collect::<Vec<_>>(), vec![3, 6]);
+    assert!(matches!(inferred_policy.recovery_paths().get(&3), Some(PathInfo::Multi(2, keys)) if keys.len() == 3));
+    assert!(matches!(inferred_policy.recovery_paths().get(&6), Some(PathInfo::Multi(3, keys)) if keys.len() == 3));
+    emit("legacy-v2-threshold-recoveries", liana_v2, &secp);
 }

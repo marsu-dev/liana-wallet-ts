@@ -4,7 +4,7 @@ import json
 import sys
 from pathlib import Path
 
-EXPECTED_IDS = ["legacy-single-primary-recovery", "legacy-2-of-3-primary-recovery", "legacy-multiple-recovery", "legacy-andor"]
+EXPECTED_IDS = ["legacy-single-primary-recovery", "legacy-2-of-3-primary-recovery", "legacy-multiple-recovery", "legacy-andor", "legacy-v2-threshold-recoveries"]
 BRANCHES = {"receive", "change"}
 INDICES = {"0", "1"}
 
@@ -48,12 +48,14 @@ def main() -> None:
         "legacy-2-of-3-primary-recovery": "LianaPolicy::new_legacy with 2-of-3 primary and 2-of-3 recovery; LianaDescriptor::new; receive/change derived at indices 0 and 1; address and script_pubkey from Rust",
         "legacy-multiple-recovery": "LianaPolicy::new_legacy with 2-of-3 primary; recovery older(42) single-key, older(43) 2-of-3, older(1678) 1-of-3; LianaDescriptor::new; receive/change derived at indices 0 and 1; address and script_pubkey from Rust",
         "legacy-andor": "LianaDescriptor::from_str over wsh(andor(pk(recovery),older(42),pk(primary))); parsed semantic policy and receive/change addresses and scripts from pinned Rust at indices 0 and 1",
+        "legacy-v2-threshold-recoveries": "LianaDescriptor::from_str over a mainnet-instantiated version of the three-recovery P2WSH shape in pinned liana/src/descriptors/mod.rs::bip32_derivs_pruning; primary 3-of-3, recovery older(3) 2-of-3 and older(6) 3-of-3 with distinct multipath values; policy mapping and Rust outputs asserted",
     }
     filenames = {
         "legacy-single-primary-recovery": "liana-v9-rust-legacy-wsh.json",
         "legacy-2-of-3-primary-recovery": "liana-v9-rust-legacy-wsh-multisig.json",
         "legacy-multiple-recovery": "liana-v9-rust-legacy-wsh-multiple-recovery.json",
         "legacy-andor": "liana-v9-rust-legacy-wsh-andor.json",
+        "legacy-v2-threshold-recoveries": "liana-v9-rust-legacy-wsh-v2-thresholds.json",
     }
     output_dir.mkdir(parents=True, exist_ok=True)
     for case_id in EXPECTED_IDS:

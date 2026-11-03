@@ -41,6 +41,11 @@ const legacyWshAndorFixture = JSON.parse(readFileSync(resolve('tests/fixtures/li
   descriptor: string;
   expected: Record<'receive' | 'change', Record<string, { address: string; scriptPubKey: string }>>;
 };
+const legacyWshV2ThresholdsFixture = JSON.parse(readFileSync(resolve('tests/fixtures/liana-v9-rust-legacy-wsh-v2-thresholds.json'), 'utf8')) as {
+  provenance: { lianaCommit: string; miniscriptVersion: string; network: string };
+  descriptor: string;
+  expected: Record<'receive' | 'change', Record<string, { address: string; scriptPubKey: string }>>;
+};
 
 function descriptorWithBody(body: string): string {
   return `${body}#${descriptorChecksum(body)}`;
@@ -181,6 +186,19 @@ describe('descriptor primitives', () => {
     expect(recoveryTree.arguments[0]!.raw).toContain('older(1678)');
     expect(recoveryTree.arguments[1]!.raw).toContain('older(43)');
   });
+  it('retains the Liana v2 threshold-recovery policy source exactly', () => {
+    const body = splitDescriptorChecksum(legacyWshV2ThresholdsFixture.descriptor).body;
+    const wallet = parseLianaDescriptor(legacyWshV2ThresholdsFixture.descriptor, 'mainnet');
+    expect(wallet.ast.source).toBe(body);
+    assertAstSourceRanges(wallet.ast.root, body);
+    expect(wallet.ast.root.kind).toBe('call');
+    if (wallet.ast.root.kind !== 'call') throw new Error('expected wsh() root');
+    expect(wallet.ast.root.arguments[0]!.raw).toContain('or_i(and_v(v:thresh(3,pkh(');
+    expect(wallet.ast.root.arguments[0]!.raw).toContain('or_d(multi(3,');
+    expect(wallet.ast.root.arguments[0]!.raw).toContain('and_v(v:thresh(2,pkh(');
+    expect(wallet.ast.root.arguments[0]!.raw).toContain('/<4;5>/*');
+    expect(wallet.ast.root.arguments[0]!.raw).toContain('/<2;3>/*');
+  });
   it('preserves P2WSH or_d ordering and rejects reversed multi-recovery or_i branches', () => {
     const single = parseLianaDescriptor(legacyWshFixture.descriptor, 'mainnet');
     expect(single.ast.root.kind).toBe('call');
@@ -212,7 +230,7 @@ describe('descriptor primitives', () => {
   });
   it('imports Liana P2WSH policies and matches pinned Rust outputs', () => {
     let checked = 0;
-    for (const item of [legacyWshFixture, legacyWshMultisigFixture, legacyWshMultipleRecoveryFixture, legacyWshAndorFixture]) {
+    for (const item of [legacyWshFixture, legacyWshMultisigFixture, legacyWshMultipleRecoveryFixture, legacyWshAndorFixture, legacyWshV2ThresholdsFixture]) {
       expect(item.provenance).toMatchObject({ lianaCommit: '398e622596e7530a328de3027cb2c09905f708c6', miniscriptVersion: '11.2.0', network: 'mainnet' });
       const wallet = parseLianaDescriptor(item.descriptor, 'mainnet');
       const body = splitDescriptorChecksum(item.descriptor).body;
@@ -229,7 +247,7 @@ describe('descriptor primitives', () => {
         }
       }
     }
-    expect(checked).toBe(16);
+    expect(checked).toBe(20);
   });
   it('rejects P2WSH descriptors without recovery and duplicate recovery timelocks', () => {
     const source = splitDescriptorChecksum(legacyWshFixture.descriptor).body;
