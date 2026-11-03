@@ -1,6 +1,6 @@
 import { Output } from '@bitcoinerlab/descriptors';
 import { networks, type Network as BitcoinNetwork } from 'bitcoinjs-lib';
-import { importAccountXpub, type Network, type AccountKey } from './bip32.js';
+import { importAccountXpub, assertNetwork, type Network, type AccountKey } from './bip32.js';
 import { WalletDerivationError } from './errors.js';
 import { constructUnspendableInternalXpub } from './taproot.js';
 import { splitDescriptorChecksum } from './descriptors.js';
@@ -29,6 +29,7 @@ function validateNumsInternalKey(body: string, network: Network): void {
   if (internal[1] !== expected.xpub) throw new WalletDerivationError('INVALID_INTERNAL_KEY', 'NUMS internal xpub does not match the ordered TapTree leaf keys');
 }
 export function parseLianaDescriptor(text: string, network: Network): WalletDescriptor {
+  assertNetwork(network);
   const { body, checksum } = splitDescriptorChecksum(text);
   const signers: AccountKey[] = [];
   for (const match of body.matchAll(KEY_WITH_ORIGIN)) {

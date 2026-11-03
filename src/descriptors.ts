@@ -1,32 +1,7 @@
 import { WalletDerivationError } from './errors.js';
-const INPUT_CHARSET = "0123456789()[],'/*abcdefgh@:$%{}IJKLMNOPQRSTUVWXYZ&+-.;<=>?!^_|~ijklmnopqrstuvwxyzABCDEFGH`#\"\\ ";
-const CHECKSUM_CHARSET = 'qpzry9x8gf2tvdw0s3jn54khce6mua7l';
-const GENERATORS = [0xf5dee51989n, 0xa9fdca3312n, 0x1bab10e32dn, 0x3706b1677an, 0x644d626ffdn];
+import { checksum as descriptorChecksum } from '@bitcoinerlab/descriptors';
+export { descriptorChecksum };
 export interface DescriptorKeyExpression { fingerprint: string; originPath: string; extendedPublicKey: string; branches: readonly [number, number]; wildcard: true; }
-export function descriptorChecksum(body: string): string {
-  let checksum = 1n, cls = 0, clsCount = 0;
-  for (const char of body) {
-    const pos = INPUT_CHARSET.indexOf(char);
-    if (pos < 0) throw new Error(`Invalid descriptor character: ${char}`);
-    const top = checksum >> 35n;
-    checksum = ((checksum & 0x7ffffffffn) << 5n) ^ BigInt(pos & 31);
-    for (let i = 0; i < 5; i++) if ((top >> BigInt(i)) & 1n) checksum ^= GENERATORS[i]!;
-    cls = cls * 3 + (pos >> 5);
-    if (++clsCount === 3) { checksum = polymod(checksum, cls); cls = 0; clsCount = 0; }
-  }
-  if (clsCount > 0) checksum = polymod(checksum, cls);
-  for (let i = 0; i < 8; i++) checksum = polymod(checksum, 0);
-  checksum ^= 1n;
-  let result = '';
-  for (let i = 0; i < 8; i++) result += CHECKSUM_CHARSET[Number((checksum >> BigInt(5 * (7 - i))) & 31n)];
-  return result;
-}
-function polymod(checksum: bigint, value: number): bigint {
-  const top = checksum >> 35n;
-  checksum = ((checksum & 0x7ffffffffn) << 5n) ^ BigInt(value);
-  for (let i = 0; i < 5; i++) if ((top >> BigInt(i)) & 1n) checksum ^= GENERATORS[i]!;
-  return checksum;
-}
 export function splitDescriptorChecksum(text: string): { body: string; checksum: string } {
   const delimiter = text.lastIndexOf('#');
   if (delimiter < 0) throw new WalletDerivationError('CHECKSUM_REQUIRED', 'Descriptor checksum is required');

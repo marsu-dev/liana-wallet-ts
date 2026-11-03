@@ -6,6 +6,7 @@ describe('BIP32 wallet derivation', () => {
     const seed = Buffer.from('000102030405060708090a0b0c0d0e0f', 'hex');
     const account = deriveAccountXpub(seed, "m/0'", 'mainnet');
     expect(account.xpub).toBe('xpub68Gmy5EdvgibQVfPdqkBBCHxA5htiqg55crXYuXoQRKfDBFA1WEjWgP6LHhwBZeNK1VTsfTFUHCdrfp1bgwQ9xv5ski8PX9rL2dZXvgGDnw');
+    expect(account.masterFingerprint).toBe('3442193e');
   });
 
   it('derives the published BIP39 English vector with passphrase TREZOR', () => {
@@ -28,6 +29,14 @@ describe('BIP32 wallet derivation', () => {
     catch (error) {
       expect(error).toBeInstanceOf(WalletDerivationError);
       expect((error as WalletDerivationError).code).toBe('INVALID_INDEX');
+    }
+  });
+  it('rejects an unsupported network at runtime', () => {
+    const seed = Buffer.from('000102030405060708090a0b0c0d0e0f', 'hex');
+    try { deriveAccountXpub(seed, 'm', 'bitcoin-mainnet' as never); throw new Error('expected error'); }
+    catch (error) {
+      expect(error).toBeInstanceOf(WalletDerivationError);
+      expect((error as WalletDerivationError).code).toBe('NETWORK_MISMATCH');
     }
   });
   it('rejects malformed extended public keys and origins', () => {
