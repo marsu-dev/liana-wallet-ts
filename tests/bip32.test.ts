@@ -18,6 +18,11 @@ describe('BIP32 wallet derivation', () => {
     expect(account.xpub.startsWith('tpub')).toBe(true);
     expect(importAccountXpub(account.xpub, `${account.masterFingerprint}/48'/1'/0'/2'`, 'signet')).toEqual(account);
   });
+  it('rejects origin paths that disagree with BIP32 depth and child-number metadata', () => {
+    const seed = Buffer.from('000102030405060708090a0b0c0d0e0f', 'hex');
+    const account = deriveAccountXpub(seed, "m/0'", 'mainnet');
+    expect(() => importAccountXpub(account.xpub, `${account.masterFingerprint}/1'`, 'mainnet')).toThrow(/origin|metadata/i);
+  });
   it('uses typed errors for invalid derivation indexes', () => {
     try { deriveChildKey({ network: 'mainnet', xpub: 'x', masterFingerprint: '00000000', originPath: 'm' }, 0x80000000, 0); throw new Error('expected error'); }
     catch (error) {

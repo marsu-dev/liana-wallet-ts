@@ -42,11 +42,16 @@ export function deriveAccountXpub(seed: Uint8Array, path: string, network: Netwo
 export function importAccountXpub(xpub: string, origin: string, network: Network): AccountKey {
   if (!/^[0-9a-fA-F]{8}(?:\/|$)/.test(origin)) throw new WalletDerivationError('INVALID_ORIGIN', 'Key origin must start with an 8-hex-digit master fingerprint');
   const [masterFingerprint, ...pathParts] = origin.split('/');
-  const originPath = pathParts.length ? `m/${parsePath(pathParts.join('/')).join('/')}` : 'm';
+  const originParts = parsePath(pathParts.join('/'));
+  const originPath = originParts.length ? `m/${originParts.join('/')}` : 'm';
   const expectedPrefix = network === 'mainnet' ? 'xpub' : 'tpub';
   if (!xpub.startsWith(expectedPrefix)) throw new WalletDerivationError('NETWORK_MISMATCH', `Extended public key prefix does not match ${network}`);
-  try { bip32.fromBase58(xpub, networkOf(network)); }
+  let node;
+  try { node = bip32.fromBase58(xpub, networkOf(network)); }
   catch (error) { throw new WalletDerivationError('INVALID_EXTENDED_KEY', `Invalid extended public key: ${error instanceof Error ? error.message : String(error)}`, { cause: error }); }
+  const last = originParts.at(-1);
+  const expectedIndex = last === undefined ? 0 : Number.parseInt(last, 10) + (/['hH]$/.test(last) ? 0x80000000 : 0);
+  if (node.depth !== originParts.length || (last !== undefined && node.index !== expectedIndex)) throw new WalletDerivationError('INVALID_ORIGIN', 'Key origin path does not match extended-key depth/child-number metadata');
   return { network, xpub, masterFingerprint: masterFingerprint!.toLowerCase(), originPath };
 }
 export function deriveChildKey(account: AccountKey, branch: number, index: number): DerivedKey {
