@@ -11,6 +11,13 @@ function bitcoinNetwork(network: Network): BitcoinNetwork {
   if (network === 'regtest') return { ...networks.testnet, bech32: 'bcrt' };
   return networks.testnet;
 }
+function validateLianaTaprootPolicy(body: string): void {
+  const tr = /^tr\(([^,]+)(?:,([\s\S]*))?\)$/.exec(body);
+  if (!tr) return;
+  if (!tr[2] || !/\bolder\s*\(/.test(tr[2])) {
+    throw new WalletDerivationError('INVALID_DESCRIPTOR', 'Liana Taproot descriptors require a recovery TapTree with at least one relative timelock');
+  }
+}
 function validateNumsInternalKey(body: string, network: Network): void {
   const tr = /^tr\(([^,]+),([\s\S]*)\)$/.exec(body);
   if (!tr) return;
@@ -32,6 +39,7 @@ export function parseLianaDescriptor(text: string, network: Network): WalletDesc
     }
   }
   if (signers.length === 0) throw new WalletDerivationError('NO_SIGNER_KEYS', 'Descriptor contains no originated xpub/tpub signer keys');
+  validateLianaTaprootPolicy(body);
   validateNumsInternalKey(body, network);
   try { new Output({ descriptor: body, network: bitcoinNetwork(network), index: 0, change: 0, checksumRequired: false }); }
   catch (error) { throw new WalletDerivationError('UNSUPPORTED_DESCRIPTOR', `Invalid or unsupported Liana output descriptor: ${error instanceof Error ? error.message : String(error)}`, { cause: error }); }

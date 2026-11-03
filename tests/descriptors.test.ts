@@ -69,6 +69,17 @@ describe('descriptor primitives', () => {
     expect(derived.address.startsWith('tb1p')).toBe(true);
     expect(derived.scriptPubKey).toHaveLength(34);
   });
+  it('rejects a Taproot key-only descriptor with no Liana recovery path', () => {
+    const signer = parseLianaDescriptor(fixture.receive.descriptor, 'signet').signers[0]!;
+    const key = `[${signer.masterFingerprint}/${signer.originPath.slice(2)}]${signer.xpub}/<0;1>/*`;
+    const body = `tr(${key})`;
+    const descriptor = `${body}#${descriptorChecksum(body)}`;
+    try { parseLianaDescriptor(descriptor, 'signet'); throw new Error('expected error'); }
+    catch (error) {
+      expect(error).toBeInstanceOf(WalletDerivationError);
+      expect((error as WalletDerivationError).code).toBe('INVALID_DESCRIPTOR');
+    }
+  });
   it('rejects a NUMS internal xpub inconsistent with ordered TapTree keys', () => {
     const wallet = parseLianaDescriptor(fixture.receive.descriptor, 'signet');
     const [primary, recovery] = wallet.signers;
