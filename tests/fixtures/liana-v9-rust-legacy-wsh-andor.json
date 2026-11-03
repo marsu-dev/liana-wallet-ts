@@ -1,0 +1,36 @@
+{
+  "id": "liana-v9-rust-legacy-andor-vectors",
+  "provenance": {
+    "lianaVersion": "9.0.0",
+    "lianaCommit": "398e622596e7530a328de3027cb2c09905f708c6",
+    "miniscriptVersion": "11.2.0",
+    "rustc": "1.80.0 (051478957 2024-07-21)",
+    "network": "mainnet",
+    "generator": "LianaDescriptor::from_str over wsh(andor(pk(recovery),older(42),pk(primary))); parsed semantic policy and receive/change addresses and scripts from pinned Rust at indices 0 and 1",
+    "testKeys": "Descriptor includes only public test xpubs; no seed or private key is stored",
+    "secretsOmitted": true
+  },
+  "descriptor": "wsh(andor(pk([4ba43603]xpub661MyMwAqRbcEtUEgdXRTY6dJQG9fRgs7C5QomqETKMYBJVtSGpRqyHSmhWy8snovPd5oWZgQ14zUquxbxu7Z1umuXbN5VDpUL1QobD5xUY/0/<0;1>/*),older(42),pk([8dfc9b34]xpub661MyMwAqRbcGFeMhhkrJL6Yj3YKQFNZQSM2BAvoMmhdjNKBh43n5v3c4YT5dFtjkirfhqQHMd22br7cHAQXAV8cZdicedZJkNweja4WWBK/1/<0;1>/*)))#6z2u5gvv",
+  "expected": {
+    "receive": {
+      "0": {
+        "address": "bc1qvxx7ap03r4upqek45fuhhzwxtq9kg3tjplw7vryta5zp6u3xrkmqj0v8f6",
+        "scriptPubKey": "0020618dee85f11d781066d5a2797b89c6580b6445720fdde60c8bed041d72261db6"
+      },
+      "1": {
+        "address": "bc1qvde04uq23rg4e6qgqe5hj0gnuq5uerm354jaj77uh705thsk0ndqppyrzw",
+        "scriptPubKey": "00206372faf00a88d15ce8080669793d13e029cc8f71a565d97bdcbf9f45de167cda"
+      }
+    },
+    "change": {
+      "0": {
+        "address": "bc1qxhajzr7cv5lsu0j724j738wmfwhsdhslfwxj5y6lcaycqwl3qjwsjg36zw",
+        "scriptPubKey": "002035fb210fd8653f0e3e5e5565e89ddb4baf06de1f4b8d2a135fc749803bf1049d"
+      },
+      "1": {
+        "address": "bc1qqj9jsmm68l6v5ucy00yt6gqlm0qmzcr0hj8k69m6jklp0yqrw4lqr7e8rq",
+        "scriptPubKey": "0020048b286f7a3ff4ca73047bc8bd201fdbc1b1606fbc8f6d177a95be179003757e"
+      }
+    }
+  }
+}

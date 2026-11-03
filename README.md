@@ -2,7 +2,7 @@
 
 Watch-only TypeScript toolkit for deriving keys and addresses from imported Bitcoin descriptors, with Liana compatibility under active validation.
 
-> **Status: early implementation.** This watch-only toolkit implements BIP32/BIP39 derivation, descriptor checksums and validation, originated xpub/tpub extraction, a bounded CLI, and descriptor-based addresses/scripts. Pinned Liana Rust parity covers four Taproot policies (16 mainnet address/script pairs) and three P2WSH forms—single-key primary/recovery, 2-of-3 primary/recovery, and 2-of-3 primary with three recovery paths (12 pairs total)—at receive/change indices 0–1. P2WSH parsing is restricted to the tested Liana recovery structures; broader policy, parser and network compatibility remain unverified. No general Liana compatibility claim is made.
+> **Status: early implementation.** This watch-only toolkit implements BIP32/BIP39 derivation, descriptor checksums and validation, originated xpub/tpub extraction, a bounded CLI, and descriptor-based addresses/scripts. Pinned Liana Rust parity covers four Taproot policies (16 mainnet address/script pairs) and four P2WSH forms—single-key, 2-of-3, three recovery paths, and the legacy `andor` encoding (16 pairs)—at receive/change indices 0–1. P2WSH parsing is restricted to the tested Liana recovery structures; broader policy, parser and network compatibility remain unverified. No general Liana compatibility claim is made.
 
 ## Requirements
 

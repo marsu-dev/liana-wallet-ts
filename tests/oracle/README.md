@@ -25,9 +25,9 @@ python3 tests/oracle/build_liana_v9_fixture.py "$REF/vectors.tsv" "$REF/rebuilt.
 cmp tests/fixtures/liana-v9-rust-taproot-multisig.json "$REF/rebuilt.json"
 ```
 
-The Rust generator calls Liana's `LianaPolicy::new` and `LianaDescriptor::new`, then derives through `receive_descriptor()` and `change_descriptor()`. The converter rejects missing/duplicate rows and requires both indices for both branches and all four policies. The checked-in TypeScript test compares all sixteen Rust address and `scriptPubKey` pairs exactly.
+The Taproot Rust generator calls Liana's `LianaPolicy::new` and `LianaDescriptor::new`, then derives through `receive_descriptor()` and `change_descriptor()`. The converter rejects missing/duplicate rows and requires both indices for both branches and all four Taproot policies. The checked-in TypeScript test compares all sixteen Rust Taproot address and `scriptPubKey` pairs exactly.
 
-The fixtures `tests/fixtures/liana-v9-rust-legacy-wsh.json`, its multisig companion, and `liana-v9-rust-legacy-wsh-multiple-recovery.json` were generated from the pinned Rust implementation with `LianaPolicy::new_legacy`: one single-key primary/recovery policy, one 2-of-3 primary/recovery policy, and one 2-of-3 primary with three recovery paths (single-key, 2-of-3 and 1-of-3). Each records the descriptor plus mainnet receive/change addresses and `scriptPubKey`s for indices 0 and 1 (twelve pairs total). They use only public test xpubs and fingerprints; no seed or private key is stored.
+The fixtures `tests/fixtures/liana-v9-rust-legacy-wsh.json`, its multisig companion, `liana-v9-rust-legacy-wsh-multiple-recovery.json`, and `liana-v9-rust-legacy-wsh-andor.json` cover three policies built with pinned `LianaPolicy::new_legacy` plus one valid legacy `andor` descriptor parsed with pinned `LianaDescriptor::from_str`. Coverage includes a single-key primary/recovery, 2-of-3 primary/recovery, a 2-of-3 primary with three recovery paths (single-key, 2-of-3 and 1-of-3), and the `andor(pk(recovery),older(42),pk(primary))` form. Fixtures record mainnet receive/change addresses and `scriptPubKey`s at indices 0 and 1 (sixteen pairs total). They use only public test xpubs and fingerprints; no seed or private key is stored.
 
 To reproduce those fixtures from the pinned source clone:
 
@@ -38,6 +38,7 @@ python3 tests/oracle/build_liana_v9_wsh_fixtures.py "$REF/wsh.tsv" "$REF/wsh-fix
 cmp tests/fixtures/liana-v9-rust-legacy-wsh.json "$REF/wsh-fixtures/liana-v9-rust-legacy-wsh.json"
 cmp tests/fixtures/liana-v9-rust-legacy-wsh-multisig.json "$REF/wsh-fixtures/liana-v9-rust-legacy-wsh-multisig.json"
 cmp tests/fixtures/liana-v9-rust-legacy-wsh-multiple-recovery.json "$REF/wsh-fixtures/liana-v9-rust-legacy-wsh-multiple-recovery.json"
+cmp tests/fixtures/liana-v9-rust-legacy-wsh-andor.json "$REF/wsh-fixtures/liana-v9-rust-legacy-wsh-andor.json"
 ```
 
-The parser handles the tested Liana P2WSH `or_d` single-recovery and nested `or_i` multi-recovery forms, where each recovery pairs a key-only path with `older(n)`; it checks distinct positive decimal timelocks. Coverage includes one three-recovery policy, not every Miniscript/Liana policy form. Accepted descriptors now include a lossless syntax AST with raw source spans; the AST is not complete Miniscript semantic validation. Other networks and broader grammar parity remain unverified. No general Liana compatibility claim is made.
+The parser handles the tested Liana P2WSH `or_d` single-recovery, nested `or_i` multi-recovery, and `andor(recovery, older(n), primary)` forms; each recovery uses a key-only policy and a distinct positive decimal timelock. The `andor` fixture's primary/recovery interpretation comes from pinned `LianaDescriptor::from_str`, not from a TypeScript-invented mapping. Coverage includes one three-recovery policy and one `andor` policy, not every Miniscript/Liana form. Accepted descriptors include a lossless syntax AST with raw source spans; the AST is not complete Miniscript semantic validation. Other networks and broader grammar parity remain unverified. No general Liana compatibility claim is made.

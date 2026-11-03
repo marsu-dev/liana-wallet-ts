@@ -132,8 +132,28 @@ function validateLianaWshPolicy(body: string): void {
   const root = descriptorCall(body);
   if (root?.name !== 'wsh' || root.args.length !== 1) throw new WalletDerivationError('INVALID_DESCRIPTOR', 'Malformed Liana P2WSH descriptor');
   const timelocks = new Set<number>();
+  function addRecovery(recoveryPolicy: string, olderExpression: string): void {
+    const older = descriptorCall(olderExpression);
+    const timelockToken = older?.name === 'older' && older.args.length === 1 ? older.args[0]! : '';
+    const timelock = /^[0-9]+$/.test(timelockToken) ? Number(timelockToken) : NaN;
+    if (!Number.isSafeInteger(timelock) || timelock < 1 || timelock > 0xffff || /\bolder\s*\(/.test(recoveryPolicy)) {
+      throw new WalletDerivationError('INVALID_DESCRIPTOR', 'Each Liana P2WSH recovery must contain one positive uint16 older() timelock');
+    }
+    if (timelocks.has(timelock)) throw new WalletDerivationError('INVALID_DESCRIPTOR', 'Liana recovery paths must have distinct relative timelocks');
+    timelocks.add(timelock);
+    if (!/(?:xpub|tpub)[1-9A-HJ-NP-Za-km-z]+/.test(recoveryPolicy) || !isLianaKeyPolicy(recoveryPolicy)) throw new WalletDerivationError('INVALID_DESCRIPTOR', 'Each Liana recovery path must be a key-only policy');
+    rejectDuplicateOrigins(originFingerprints(recoveryPolicy), 'recovery');
+  }
   function walk(expression: string): string {
     const call = descriptorCall(expression);
+    if (call?.name === 'andor') {
+      if (call.args.length !== 3) throw new WalletDerivationError('INVALID_DESCRIPTOR', 'Liana P2WSH andor policies must have recovery key, timelock and primary key arguments');
+      const recoveryPolicy = call.args[0]!;
+      const primary = call.args[2]!;
+      if (!isLianaKeyPolicy(primary) || /\bolder\s*\(/.test(primary)) throw new WalletDerivationError('INVALID_DESCRIPTOR', 'Liana P2WSH andor requires an untimelocked key-only primary path');
+      addRecovery(recoveryPolicy, call.args[1]!);
+      return primary;
+    }
     if (call?.name === 'or_d' || call?.name === 'or_i') {
       if (call.args.length !== 2) throw new WalletDerivationError('INVALID_DESCRIPTOR', 'Liana P2WSH recovery branches must be binary OR policies');
       const recoveryExpression = call.name === 'or_d' ? call.args[1]! : call.args[0]!;
@@ -143,16 +163,7 @@ function validateLianaWshPolicy(body: string): void {
         throw new WalletDerivationError('INVALID_DESCRIPTOR', 'Liana P2WSH recovery branches must pair signer keys with older()');
       }
       const recoveryPolicy = recovery.args[0]!.slice(2);
-      const older = descriptorCall(recovery.args[1]!);
-      const timelockToken = older?.name === 'older' && older.args.length === 1 ? older.args[0]! : '';
-      const timelock = /^[0-9]+$/.test(timelockToken) ? Number(timelockToken) : NaN;
-      if (!Number.isSafeInteger(timelock) || timelock < 1 || timelock > 0xffff || /\bolder\s*\(/.test(recoveryPolicy)) {
-        throw new WalletDerivationError('INVALID_DESCRIPTOR', 'Each Liana P2WSH recovery must contain one positive uint16 older() timelock');
-      }
-      if (timelocks.has(timelock)) throw new WalletDerivationError('INVALID_DESCRIPTOR', 'Liana recovery paths must have distinct relative timelocks');
-      timelocks.add(timelock);
-      if (!/(?:xpub|tpub)[1-9A-HJ-NP-Za-km-z]+/.test(recoveryPolicy) || !isLianaKeyPolicy(recoveryPolicy)) throw new WalletDerivationError('INVALID_DESCRIPTOR', 'Each Liana recovery path must be a key-only policy');
-      rejectDuplicateOrigins(originFingerprints(recoveryPolicy), 'recovery');
+      addRecovery(recoveryPolicy, recovery.args[1]!);
       return walk(previousExpression);
     }
     if (/\bolder\s*\(/.test(expression) || !/(?:xpub|tpub)[1-9A-HJ-NP-Za-km-z]+/.test(expression) || !isLianaKeyPolicy(expression)) {

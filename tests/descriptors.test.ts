@@ -36,6 +36,11 @@ const legacyWshMultipleRecoveryFixture = JSON.parse(readFileSync(resolve('tests/
   descriptor: string;
   expected: Record<'receive' | 'change', Record<string, { address: string; scriptPubKey: string }>>;
 };
+const legacyWshAndorFixture = JSON.parse(readFileSync(resolve('tests/fixtures/liana-v9-rust-legacy-wsh-andor.json'), 'utf8')) as {
+  provenance: { lianaCommit: string; miniscriptVersion: string; network: string };
+  descriptor: string;
+  expected: Record<'receive' | 'change', Record<string, { address: string; scriptPubKey: string }>>;
+};
 
 function descriptorWithBody(body: string): string {
   return `${body}#${descriptorChecksum(body)}`;
@@ -187,6 +192,17 @@ describe('descriptor primitives', () => {
     expect(singlePolicy.arguments[0]!.raw).not.toContain('older(');
     expect(singlePolicy.arguments[1]!.raw).toContain('older(');
 
+    const andor = parseLianaDescriptor(legacyWshAndorFixture.descriptor, 'mainnet');
+    if (andor.ast.root.kind !== 'call') throw new Error('expected wsh() root');
+    const andorPolicy = andor.ast.root.arguments[0]!;
+    if (andorPolicy.kind !== 'call' || andorPolicy.name !== 'andor') throw new Error('expected Liana andor policy');
+    expect(andorPolicy.arguments).toHaveLength(3);
+    expect(andorPolicy.arguments[0]!.raw).toContain('[4ba43603]');
+    expect(andorPolicy.arguments[0]!.raw).not.toContain('older(');
+    expect(andorPolicy.arguments[1]!.raw).toBe('older(42)');
+    expect(andorPolicy.arguments[2]!.raw).toContain('[8dfc9b34]');
+    expect(andorPolicy.arguments[2]!.raw).not.toContain('older(');
+
     const multi = parseLianaDescriptor(legacyWshMultipleRecoveryFixture.descriptor, 'mainnet');
     if (multi.ast.root.kind !== 'call') throw new Error('expected wsh() root');
     const policy = multi.ast.root.arguments[0]!;
@@ -196,7 +212,7 @@ describe('descriptor primitives', () => {
   });
   it('imports Liana P2WSH policies and matches pinned Rust outputs', () => {
     let checked = 0;
-    for (const item of [legacyWshFixture, legacyWshMultisigFixture, legacyWshMultipleRecoveryFixture]) {
+    for (const item of [legacyWshFixture, legacyWshMultisigFixture, legacyWshMultipleRecoveryFixture, legacyWshAndorFixture]) {
       expect(item.provenance).toMatchObject({ lianaCommit: '398e622596e7530a328de3027cb2c09905f708c6', miniscriptVersion: '11.2.0', network: 'mainnet' });
       const wallet = parseLianaDescriptor(item.descriptor, 'mainnet');
       const body = splitDescriptorChecksum(item.descriptor).body;
@@ -213,7 +229,7 @@ describe('descriptor primitives', () => {
         }
       }
     }
-    expect(checked).toBe(12);
+    expect(checked).toBe(16);
   });
   it('rejects P2WSH descriptors without recovery and duplicate recovery timelocks', () => {
     const source = splitDescriptorChecksum(legacyWshFixture.descriptor).body;
@@ -224,9 +240,21 @@ describe('descriptor primitives', () => {
     const withoutRecovery = descriptorWithBody(`wsh(${primary})`);
     const duplicateTimelock = descriptorWithBody(`wsh(or_d(or_d(${primary},${recovery}),${recovery}))`);
     const emptyArgument = descriptorWithBody(source.replace('or_d(', 'or_d(,'));
+    const andorBody = splitDescriptorChecksum(legacyWshAndorFixture.descriptor).body;
+    const malformedAndor = descriptorWithBody(andorBody.replace(',older(42),', ','));
+    const zeroAndorTimelock = descriptorWithBody(andorBody.replace('older(42)', 'older(0)'));
+    const oversizedAndorTimelock = descriptorWithBody(andorBody.replace('older(42)', 'older(65536)'));
+    const malformedAndorTimelock = descriptorWithBody(andorBody.replace('older(42)', 'older(0x2a)'));
+    const andorKeys = andorBody.match(/\[[0-9a-fA-F]{8}\](?:xpub|tpub)[1-9A-HJ-NP-Za-km-z]+/g)!;
+    const duplicateAndorRecoveryOrigin = descriptorWithBody(`wsh(andor(multi(1,${andorKeys[0]!}/0/<0;1>/*,${andorKeys[0]!}/2/<0;1>/*),older(42),pk(${andorKeys[1]!}/1/<0;1>/*)))`);
     expect(() => parseLianaDescriptor(withoutRecovery, 'mainnet')).toThrowError(expect.objectContaining({ code: 'INVALID_DESCRIPTOR' }));
     expect(() => parseLianaDescriptor(duplicateTimelock, 'mainnet')).toThrowError(expect.objectContaining({ code: 'INVALID_DESCRIPTOR' }));
     expect(() => parseLianaDescriptor(emptyArgument, 'mainnet')).toThrowError(expect.objectContaining({ code: 'INVALID_DESCRIPTOR' }));
+    expect(() => parseLianaDescriptor(malformedAndor, 'mainnet')).toThrowError(expect.objectContaining({ code: 'INVALID_DESCRIPTOR' }));
+    expect(() => parseLianaDescriptor(zeroAndorTimelock, 'mainnet')).toThrowError(expect.objectContaining({ code: 'INVALID_DESCRIPTOR' }));
+    expect(() => parseLianaDescriptor(oversizedAndorTimelock, 'mainnet')).toThrowError(expect.objectContaining({ code: 'INVALID_DESCRIPTOR' }));
+    expect(() => parseLianaDescriptor(malformedAndorTimelock, 'mainnet')).toThrowError(expect.objectContaining({ code: 'INVALID_DESCRIPTOR' }));
+    expect(() => parseLianaDescriptor(duplicateAndorRecoveryOrigin, 'mainnet')).toThrowError(expect.objectContaining({ code: 'INVALID_DESCRIPTOR' }));
     const nonKeyPrimary = descriptorWithBody(`wsh(or_d(and_v(v:${primary},sha256(${'00'.repeat(32)})),${recovery}))`);
     expect(() => parseLianaDescriptor(nonKeyPrimary, 'mainnet')).toThrowError(expect.objectContaining({ code: 'INVALID_DESCRIPTOR' }));
     const malformedTimelock = descriptorWithBody(source.replace('older(36)', 'older(0x10)'));

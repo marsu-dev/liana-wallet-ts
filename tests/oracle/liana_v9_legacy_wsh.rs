@@ -64,4 +64,18 @@ fn main() {
         ]),
     ).expect("valid legacy policy with multiple recovery paths");
     emit("legacy-multiple-recovery", LianaDescriptor::new(multiple_recovery), &secp);
+
+    let andor_body = format!("wsh(andor(pk({}),older(42),pk({})))", key(&roots, 0, 0), key(&roots, 1, 1));
+    let andor = LianaDescriptor::from_str(&andor_body).expect("valid legacy andor descriptor");
+    let inferred_policy = andor.policy();
+    match inferred_policy.primary_path() {
+        PathInfo::Single(key) => assert!(key.to_string().contains("[8dfc9b34]")),
+        _ => panic!("expected the third andor argument to be primary"),
+    }
+    assert_eq!(inferred_policy.recovery_paths().keys().copied().collect::<Vec<_>>(), vec![42]);
+    match inferred_policy.recovery_paths().get(&42).expect("recovery at 42") {
+        PathInfo::Single(key) => assert!(key.to_string().contains("[4ba43603]")),
+        _ => panic!("expected the first andor argument to be the recovery key"),
+    }
+    emit("legacy-andor", andor, &secp);
 }
