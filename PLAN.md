@@ -51,7 +51,9 @@ Construire un package ESM TypeScript pour Node.js ≥20.19 qui importe un descri
 - Mapper `receive`/`change` vers les deux valeurs multipath présentes dans le descripteur, même si elles ne sont pas 0 et 1.
 - Rejeter explicitement checksum absent/invalide selon le contrat retenu, origines absentes, dérivations durcies publiques, réseau incompatible, politiques invalides et doublons interdits par la référence.
 
-**Porte de sortie :** fixture importée sans perte ; cas invalides produisent les erreurs documentées. Tout écart de parser est traité par un adaptateur dédié, jamais par normalisation silencieuse.
+**Avancement — toujours partiel :** validation/import de `tr()` et d’un sous-ensemble `wsh()` implémentés. Le sous-ensemble WSH contrôle la chaîne `or_d(primary, and_v(v:recovery, older(n)))`, impose des politiques à clés directes (sans thresholds imbriqués), des timelocks décimaux positifs et les règles de duplication d’origines/xpubs ; deux formes P2WSH (single-key et 2-of-3) ont des vecteurs Rust exacts sur mainnet, branches receive/change, indices 0–1 (8 paires). Le texte source est préservé et les choix multipath sont exposés, mais l’AST lossless associé, la parité complète de grammaire Liana/Miniscript, plusieurs récupérations P2WSH et les réseaux supplémentaires ne sont pas validés.
+
+**Porte de sortie :** fixture importée sans perte ; cas invalides produisent les erreurs documentées. Tout écart de parser est traité par un adaptateur dédié, jamais par normalisation silencieuse. Cette porte n’est pas encore satisfaite : AST et couverture de grammaire sont incomplets.
 
 ## Phase 4 — Taproot Liana et adresses exactes (P0)
 

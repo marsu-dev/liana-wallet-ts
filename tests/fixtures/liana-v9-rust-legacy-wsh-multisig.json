@@ -1,0 +1,36 @@
+{
+  "id": "liana-v9-rust-legacy-2-of-3-primary-recovery-vectors",
+  "provenance": {
+    "lianaVersion": "9.0.0",
+    "lianaCommit": "398e622596e7530a328de3027cb2c09905f708c6",
+    "miniscriptVersion": "11.2.0",
+    "rustc": "1.80.0 (051478957 2024-07-21)",
+    "network": "mainnet",
+    "generator": "LianaPolicy::new_legacy with 2-of-3 primary and 2-of-3 recovery; LianaDescriptor::new; receive/change derived at indices 0 and 1; address and script_pubkey from Rust",
+    "testKeys": "Descriptor includes only public test xpubs; no seed or private key is stored",
+    "secretsOmitted": true
+  },
+  "descriptor": "wsh(or_d(multi(2,[4ba43603]xpub661MyMwAqRbcEtUEgdXRTY6dJQG9fRgs7C5QomqETKMYBJVtSGpRqyHSmhWy8snovPd5oWZgQ14zUquxbxu7Z1umuXbN5VDpUL1QobD5xUY/0/<0;1>/*,[8dfc9b34]xpub661MyMwAqRbcGFeMhhkrJL6Yj3YKQFNZQSM2BAvoMmhdjNKBh43n5v3c4YT5dFtjkirfhqQHMd22br7cHAQXAV8cZdicedZJkNweja4WWBK/0/<0;1>/*,[56c4fac3]xpub661MyMwAqRbcFNWTmtbxHaYsjddAazfBQ51wm61veSzW3z2N7s1U7M9epMGsedj3unJKhXBY2sxWpQutwrZnpFuWe2vVVvLig8nFT4nmG67/0/<0;1>/*),and_v(v:thresh(2,pkh([4ba43603]xpub661MyMwAqRbcEtUEgdXRTY6dJQG9fRgs7C5QomqETKMYBJVtSGpRqyHSmhWy8snovPd5oWZgQ14zUquxbxu7Z1umuXbN5VDpUL1QobD5xUY/1/<0;1>/*),a:pkh([8dfc9b34]xpub661MyMwAqRbcGFeMhhkrJL6Yj3YKQFNZQSM2BAvoMmhdjNKBh43n5v3c4YT5dFtjkirfhqQHMd22br7cHAQXAV8cZdicedZJkNweja4WWBK/1/<0;1>/*),a:pkh([56c4fac3]xpub661MyMwAqRbcFNWTmtbxHaYsjddAazfBQ51wm61veSzW3z2N7s1U7M9epMGsedj3unJKhXBY2sxWpQutwrZnpFuWe2vVVvLig8nFT4nmG67/1/<0;1>/*)),older(26352))))#7vjjh7vq",
+  "expected": {
+    "receive": {
+      "0": {
+        "address": "bc1qx04uptz0ee3vcea43cuynd2fjsduw70xnqtk9faxy7dnhtspcprqeucc8g",
+        "scriptPubKey": "002033ebc0ac4fce62cc67b58e3849b549941bc779e6981762a7a6279b3bae01c046"
+      },
+      "1": {
+        "address": "bc1qeqaeuwmjhrz74avurcm0evvj08rntv07w4f4r5mf5y8hkrvkcl6q4xnuez",
+        "scriptPubKey": "0020c83b9e3b72b8c5eaf59c1e36fcb19279c735b1fe755351d369a10f7b0d96c7f4"
+      }
+    },
+    "change": {
+      "0": {
+        "address": "bc1qrx5saja2sma50yq0m4dvj85d85wr4h8h3k0cvkqpmhtmf0g5gzfsnsk60s",
+        "scriptPubKey": "002019a90ecbaa86fb47900fdd5ac91e8d3d1c3adcf78d9f865801ddd7b4bd144093"
+      },
+      "1": {
+        "address": "bc1qfv787wzrvqd3e0dcczcn6npsg8pq3l995lmmska32umrjeznw62s0swyhw",
+        "scriptPubKey": "00204b3c7f3843601b1cbdb8c0b13d4c3041c208fca5a7f7b85bb157363964537695"
+      }
+    }
+  }
+}
