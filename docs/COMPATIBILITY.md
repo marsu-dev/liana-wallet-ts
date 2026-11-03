@@ -12,9 +12,7 @@ Relevant source locations:
 
 ## Signet fixture
 
-`tests/fixtures/liana-v9-signet-single-primary-recovery.json` records the full receive/change descriptors and index-0 address vectors from the community gist at <https://gist.github.com/jdlcdl/b17c6b551839adb5b7b7d4ef9574e48e>. The source reports Liana v9.0 and uses Bitcoin Core `deriveaddresses`; it is an independent cross-check for a single-key primary path with a 36-block recovery path. It is **not** a multisig or NUMS oracle, nor an upstream Rust-maintained test vector. Mnemonic/private material from the gist is deliberately excluded.
-
-The fixture includes a receive scriptPubKey recorded by the gist's Bitcoin Core output. Change address is included; add its scriptPubKey and further address indexes only when extracted directly from the full source or independently reproduced by the pinned oracle.
+`tests/fixtures/liana-v9-signet-single-primary-recovery.json` records the full receive/change descriptors, checksums and the first ten receive/change addresses from the community gist at <https://gist.github.com/jdlcdl/b17c6b551839adb5b7b7d4ef9574e48e>. The source reports Liana v9.0 and uses Bitcoin Core `deriveaddresses`; it is an independent cross-check for a single-key primary path with a 36-block recovery path. It is **not** a multisig or NUMS oracle, nor an upstream Rust-maintained test vector. Mnemonic/private material from the gist is deliberately excluded. The fixture also records the receive index-0 scriptPubKey.
 
 ## Validation requirements
 

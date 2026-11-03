@@ -11,10 +11,12 @@
   "receive": {
     "descriptor": "tr([07fd816d/48'/1'/0'/2']tpubDDvFWduSiwhW7hUbL1oMyUfcNgeSyZgHbooe1WjHyRaXYH3uUjm1xdxWXAGbQFn8QGScDg4b4a6WMGNiEAq2uQdmPDhDKPE5Dr8DX24mwd5/0/*,and_v(v:pk([da855a1f/48'/1'/0'/2']tpubDEHRt73d4guqR5BLGQud4XMW8vDCGHUj54qDTFtsdFstF6PAYx1oAy3jfKg1PffqLUWuSsXmnetKeTJFKfKLXeJR97yUuqvvojnoBcUDHg5/0/*),older(36)))#22y0dhdd",
     "addressIndex0": "tb1pvpqeka564yfls5ma8ps56q2xd4sn8mstm7pe6nfxezw3wc963pysnda6x9",
-    "scriptPubKeyIndex0": "512060419b769aa913f8537d38614d01466d6133ee0bdf839d4d26c89d1760ba8849"
+    "scriptPubKeyIndex0": "512060419b769aa913f8537d38614d01466d6133ee0bdf839d4d26c89d1760ba8849",
+    "addresses0to9": ["tb1pvpqeka564yfls5ma8ps56q2xd4sn8mstm7pe6nfxezw3wc963pysnda6x9", "tb1pgfatfr9w9fa4efzmdghhkwxy6xgjmlw7qhpv7lnxhsxvvwvw724qwcfukw", "tb1pevejlzshsf9mw3zp6afnmucumpu2f5cl3wy4jupl30sclvlde9dq60j8cd", "tb1pr7gpsykqs9jyjm2a3vyeg6dpp3j7c79l53lsux760pay56ehrygq9q3wyu", "tb1pk76gc7834mucf22sn4f8yxar36m6zv3dpv0328kg6cxd26pgufrsmzth7q", "tb1pveftxgw6qv3kj0gte0nms4guz4rt6690em7a436r66hqc82u00fsyml8m5", "tb1p5l2mvx28v85dl4dhg8y3gztzttucgva22h8k2v5496hmj2mxqzfsml65wv", "tb1pgvvpkuflm6ezudeltqys069klx2t6uz35zzmqsgr8lc2skz28dss94t06y", "tb1pca535ljvzwk3h2qmpau97fma05zksy3kma58d798a357999cmdsq69t0df", "tb1pkpa5365e2uq7vwljfchcrrryrq4u9xrpk2m82thruxgpcq6006mscqkjfc"]
   },
   "change": {
     "descriptor": "tr([07fd816d/48'/1'/0'/2']tpubDDvFWduSiwhW7hUbL1oMyUfcNgeSyZgHbooe1WjHyRaXYH3uUjm1xdxWXAGbQFn8QGScDg4b4a6WMGNiEAq2uQdmPDhDKPE5Dr8DX24mwd5/1/*,and_v(v:pk([da855a1f/48'/1'/0'/2']tpubDEHRt73d4guqR5BLGQud4XMW8vDCGHUj54qDTFtsdFstF6PAYx1oAy3jfKg1PffqLUWuSsXmnetKeTJFKfKLXeJR97yUuqvvojnoBcUDHg5/1/*),older(36)))#gcgkq5nc",
-    "addressIndex0": "tb1prn8cy7j5q8sc2g7ahgexmjfxauwvluvp7m80gvw9rzzrdnpculpsw6h524"
+    "addressIndex0": "tb1prn8cy7j5q8sc2g7ahgexmjfxauwvluvp7m80gvw9rzzrdnpculpsw6h524",
+    "addresses0to9": ["tb1prn8cy7j5q8sc2g7ahgexmjfxauwvluvp7m80gvw9rzzrdnpculpsw6h524", "tb1pxvzcflpfkyh56l7ycrshdsw49pfeq4j57v9uwf2vh4d8nn8r9xjq5yuqq5", "tb1p7gvvxu2ly7fuqmt84shqr6pf5g74usphpjydyy63kkjpctkn92asma0wx5", "tb1p97zh65xd5unzv76uwkjp9rut0a9rgehqx3xds6dr82kn77f9drfs939d5j", "tb1phapydm7v8cndgrc7u4mdm8ldtgy4stf8exhzd2z9qqdnycahch0qxp3fc0", "tb1p5h535n38pnr5rvx39h0gutpghu2ecwh25yqpf3tvuefknku5ac7qhdj56u", "tb1pjr3vlemjz85emv9t87x4p6zfmc974hgqkpysyysjw4h2s86dmveqmr4vsk", "tb1pj83uut68gwvm7cfg6g4p57a7q64t0455vjfjeennlqcmzgvw8dhsfdlqxt", "tb1p6qd79us6mtmfaqa463u9aa5l66gdy5pql9wjwja36jtdt9x3ej0qse0swt", "tb1p4z2f8s4xhgtes6ytn65lrxhyhcs55ezllenst4qjezq8mlg443gqgvstuc"]
   }
 }
