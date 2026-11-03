@@ -2,7 +2,7 @@
 
 Watch-only TypeScript toolkit for deriving keys and, in later milestones, exact addresses from imported Liana Bitcoin wallet descriptors.
 
-> **Status: early implementation.** This package currently implements basic BIP32 seed-to-extended-public-key derivation and non-hardened public child derivation. Liana descriptor parsing and Taproot address derivation are not implemented; no Liana compatibility claim is made.
+> **Status: early implementation.** This package currently implements basic BIP32 seed-to-extended-public-key derivation, non-hardened public child derivation, Bitcoin Core descriptor checksums, and parsing of originated xpub/tpub key expressions with two multipath choices. Full Liana descriptor parsing and Taproot address derivation are not implemented; no Liana compatibility claim is made.
 
 ## Requirements
 

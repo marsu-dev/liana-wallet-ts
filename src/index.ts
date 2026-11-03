@@ -4,3 +4,4 @@ export interface DerivedKey { branchIndex: number; addressIndex: number; compres
 export interface WalletDescriptor { network: Network; original: string; checksum?: string; signers: AccountKey[]; }
 export interface DerivedAddress { address: string; scriptPubKey: Uint8Array; branch: 'receive' | 'change'; index: number; }
 export { deriveAccountXpub, deriveChildKey, importAccountXpub, mnemonicToSeed } from './bip32.js';
+export { descriptorChecksum, parseMultipath, splitDescriptorChecksum } from './descriptors.js';
