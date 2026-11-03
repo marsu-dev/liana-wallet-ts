@@ -118,7 +118,7 @@ describe('descriptor primitives', () => {
   });
   it('matches the pinned Liana Rust Taproot single-key and multisig address/script vectors', () => {
     expect(rustMultisigFixture.provenance).toMatchObject({ lianaCommit: '398e622596e7530a328de3027cb2c09905f708c6', miniscriptVersion: '11.2.0', network: 'mainnet' });
-    expect(rustMultisigFixture.cases.map((item) => item.id)).toEqual(['single-primary-recovery', 'multisig-one-recovery', 'multisig-distinct-branch-values', 'multisig-multiple-recovery']);
+    expect(rustMultisigFixture.cases.map((item) => item.id)).toEqual(['single-primary-recovery', 'multisig-one-recovery', 'multisig-distinct-branch-values', 'multisig-multiple-recovery', 'taproot-multi-a-multiple-recovery']);
     let checked = 0;
     for (const item of rustMultisigFixture.cases) {
       const wallet = parseLianaDescriptor(item.descriptor, 'mainnet');
@@ -136,7 +136,17 @@ describe('descriptor primitives', () => {
         }
       }
     }
-    expect(checked).toBe(16);
+    expect(checked).toBe(20);
+  });
+  it('retains a multi_a Taproot recovery leaf beside multiple timelocked recovery branches', () => {
+    const item = rustMultisigFixture.cases.find((candidate) => candidate.id === 'taproot-multi-a-multiple-recovery');
+    if (!item) throw new Error('expected pinned multi_a recovery fixture');
+    const body = splitDescriptorChecksum(item.descriptor).body;
+    const wallet = parseLianaDescriptor(item.descriptor, 'mainnet');
+    expect(wallet.ast.source).toBe(body);
+    assertAstSourceRanges(wallet.ast.root, body);
+    expect([...body.matchAll(/and_v\(v:multi_a\([^)]*\),older\((\d+)\)\)/g)].map((match) => Number(match[1]))).toEqual([1678, 42, 43]);
+    expect([...body.matchAll(/multi_a\(/g)]).toHaveLength(4);
   });
   it('retains an ordered lossless syntax tree tied to the original Taproot source', () => {
     const item = rustMultisigFixture.cases.find((candidate) => candidate.id === 'multisig-multiple-recovery')!;
@@ -478,8 +488,11 @@ describe('descriptor primitives', () => {
     const descriptor = `${bodyWithPrivateKey}#${descriptorChecksum(bodyWithPrivateKey)}`;
     expect(() => parseLianaDescriptor(descriptor, 'signet')).toThrowError(expect.objectContaining({ code: 'INVALID_EXTENDED_KEY' }));
   });
-  it('rejects a descriptor with a modified checksum', () => {
-    expect(() => parseLianaDescriptor(fixture.receive.descriptor.replace('#22y0dhdd', '#00000000'), 'signet')).toThrow(/checksum/i);
+  it('rejects a Signet descriptor when the caller selects mainnet', () => {
+    expect(() => parseLianaDescriptor(fixture.receive.descriptor, 'mainnet')).toThrowError(expect.objectContaining({ code: 'NETWORK_MISMATCH' }));
+  });
+  it('rejects a descriptor with a modified checksum as a typed checksum error', () => {
+    expect(() => parseLianaDescriptor(fixture.receive.descriptor.replace('#22y0dhdd', '#00000000'), 'signet')).toThrowError(expect.objectContaining({ code: 'INVALID_CHECKSUM' }));
   });
   it('splits a descriptor and verifies its checksum without changing its body', () => {
     expect(splitDescriptorChecksum('raw(deadbeef)#89f8spxm')).toEqual({ body: 'raw(deadbeef)', checksum: '89f8spxm' });

@@ -8,7 +8,7 @@
     "cargoLock": "Liana repository Cargo.lock at the pinned commit",
     "network": "mainnet",
     "generator": "LianaPolicy::new and LianaDescriptor::new; outputs from LianaDescriptor::receive_descriptor/change_descriptor, derive indices 0 and 1 with verification_only Secp256k1, address(Network::Bitcoin), script_pubkey()",
-    "testKeys": "Five deterministic test-only BIP32 roots; fixture contains public descriptors only, no seed or private keys",
+    "testKeys": "Four deterministic test-only BIP32 roots; fixture contains public descriptors only, no seed or private keys",
     "secretsOmitted": true
   },
   "cases": [
@@ -116,6 +116,33 @@
           "1": {
             "address": "bc1prq6yf829yle3nfpjuysgq7744n7yy979xlxlyldxkn98k7x88hkqhxsstc",
             "scriptPubKey": "51201834449d4527f319a432e120807bd5acfc4217c537cdf27da6b4ca7b78c73dec"
+          }
+        }
+      }
+    },
+    {
+      "id": "taproot-multi-a-multiple-recovery",
+      "policy": "2-of-3 primary; multi_a recoveries older(42) 2-of-3, older(43) 3-of-3, older(1678) 1-of-3",
+      "descriptor": "tr(xpub661MyMwAqRbcFvvmHA9FjFuJvtEL7nyRm5jruLZt7fSJ6fCY5DV6GFCe1kkTWXSQby93qxfdxHnCr3VDCpSGnBGp3yAwsBKWQwtKvZ7LMLk/<0;1>/*,{{and_v(v:multi_a(1,[4ba43603]xpub661MyMwAqRbcEtUEgdXRTY6dJQG9fRgs7C5QomqETKMYBJVtSGpRqyHSmhWy8snovPd5oWZgQ14zUquxbxu7Z1umuXbN5VDpUL1QobD5xUY/3/<0;1>/*,[8dfc9b34]xpub661MyMwAqRbcGFeMhhkrJL6Yj3YKQFNZQSM2BAvoMmhdjNKBh43n5v3c4YT5dFtjkirfhqQHMd22br7cHAQXAV8cZdicedZJkNweja4WWBK/3/<0;1>/*,[56c4fac3]xpub661MyMwAqRbcFNWTmtbxHaYsjddAazfBQ51wm61veSzW3z2N7s1U7M9epMGsedj3unJKhXBY2sxWpQutwrZnpFuWe2vVVvLig8nFT4nmG67/3/<0;1>/*),older(1678)),{and_v(v:multi_a(2,[4ba43603]xpub661MyMwAqRbcEtUEgdXRTY6dJQG9fRgs7C5QomqETKMYBJVtSGpRqyHSmhWy8snovPd5oWZgQ14zUquxbxu7Z1umuXbN5VDpUL1QobD5xUY/1/<0;1>/*,[8dfc9b34]xpub661MyMwAqRbcGFeMhhkrJL6Yj3YKQFNZQSM2BAvoMmhdjNKBh43n5v3c4YT5dFtjkirfhqQHMd22br7cHAQXAV8cZdicedZJkNweja4WWBK/1/<0;1>/*,[56c4fac3]xpub661MyMwAqRbcFNWTmtbxHaYsjddAazfBQ51wm61veSzW3z2N7s1U7M9epMGsedj3unJKhXBY2sxWpQutwrZnpFuWe2vVVvLig8nFT4nmG67/1/<0;1>/*),older(42)),and_v(v:multi_a(3,[4ba43603]xpub661MyMwAqRbcEtUEgdXRTY6dJQG9fRgs7C5QomqETKMYBJVtSGpRqyHSmhWy8snovPd5oWZgQ14zUquxbxu7Z1umuXbN5VDpUL1QobD5xUY/2/<0;1>/*,[8dfc9b34]xpub661MyMwAqRbcGFeMhhkrJL6Yj3YKQFNZQSM2BAvoMmhdjNKBh43n5v3c4YT5dFtjkirfhqQHMd22br7cHAQXAV8cZdicedZJkNweja4WWBK/2/<0;1>/*,[56c4fac3]xpub661MyMwAqRbcFNWTmtbxHaYsjddAazfBQ51wm61veSzW3z2N7s1U7M9epMGsedj3unJKhXBY2sxWpQutwrZnpFuWe2vVVvLig8nFT4nmG67/2/<0;1>/*),older(43))}},multi_a(2,[4ba43603]xpub661MyMwAqRbcEtUEgdXRTY6dJQG9fRgs7C5QomqETKMYBJVtSGpRqyHSmhWy8snovPd5oWZgQ14zUquxbxu7Z1umuXbN5VDpUL1QobD5xUY/0/<0;1>/*,[8dfc9b34]xpub661MyMwAqRbcGFeMhhkrJL6Yj3YKQFNZQSM2BAvoMmhdjNKBh43n5v3c4YT5dFtjkirfhqQHMd22br7cHAQXAV8cZdicedZJkNweja4WWBK/0/<0;1>/*,[56c4fac3]xpub661MyMwAqRbcFNWTmtbxHaYsjddAazfBQ51wm61veSzW3z2N7s1U7M9epMGsedj3unJKhXBY2sxWpQutwrZnpFuWe2vVVvLig8nFT4nmG67/0/<0;1>/*)})#7l76hr9j",
+      "expected": {
+        "receive": {
+          "0": {
+            "address": "bc1ps9n9d8avmduzpjqku4d33t2gq20jewgg78z8lg8sj6666tva7jms0hg4ad",
+            "scriptPubKey": "51208166569facdb7820c816e55b18ad48029f2cb908f1c47fa0f096b5ad2d9df4b7"
+          },
+          "1": {
+            "address": "bc1pkms5gzweq7jh544pfa8cln98y37s979fe5euxsf9lu494vy7ml9suw78mg",
+            "scriptPubKey": "5120b6e14409d907a57a56a14f4f8fcca7247d02f8a9cd33c34125ff2a5ab09edfcb"
+          }
+        },
+        "change": {
+          "0": {
+            "address": "bc1pug4e9swr3l8gpaql22pdwchnee03gvwvtferq08qay89t8n2wnxqu9nhdf",
+            "scriptPubKey": "5120e22b92c1c38fce80f41f5282d762f3ce5f1431cc5a72303ce0e90e559e6a74cc"
+          },
+          "1": {
+            "address": "bc1pv0lafjwedcltg3pzcymlrghqjllfwck77q6xy9pnd4l2f8j9z6nqsawqxf",
+            "scriptPubKey": "512063ffd4c9d96e3eb44422c137f1a2e097fe9762def0346214336d7ea49e4516a6"
           }
         }
       }

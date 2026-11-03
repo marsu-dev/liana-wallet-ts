@@ -4,7 +4,7 @@ import json
 import sys
 from pathlib import Path
 
-EXPECTED_IDS = ["single-primary-recovery", "multisig-one-recovery", "multisig-distinct-branch-values", "multisig-multiple-recovery"]
+EXPECTED_IDS = ["single-primary-recovery", "multisig-one-recovery", "multisig-distinct-branch-values", "multisig-multiple-recovery", "taproot-multi-a-multiple-recovery"]
 EXPECTED_BRANCHES = {"receive", "change"}
 EXPECTED_INDICES = {"0", "1"}
 
@@ -59,7 +59,7 @@ def main() -> None:
             "cargoLock": "Liana repository Cargo.lock at the pinned commit",
             "network": "mainnet",
             "generator": "LianaPolicy::new and LianaDescriptor::new; outputs from LianaDescriptor::receive_descriptor/change_descriptor, derive indices 0 and 1 with verification_only Secp256k1, address(Network::Bitcoin), script_pubkey()",
-            "testKeys": "Five deterministic test-only BIP32 roots; fixture contains public descriptors only, no seed or private keys",
+            "testKeys": "Four deterministic test-only BIP32 roots; fixture contains public descriptors only, no seed or private keys",
             "secretsOmitted": True,
         },
         "cases": [cases[case_id] for case_id in EXPECTED_IDS],

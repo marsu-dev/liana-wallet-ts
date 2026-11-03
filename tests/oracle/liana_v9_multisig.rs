@@ -83,4 +83,28 @@ fn main() {
         ]),
     ).expect("valid multiple-recovery Liana policy");
     emit("multisig-multiple-recovery", "2-of-3 primary; recovery older(42) single-key, older(43) 2-of-3, older(1678) 1-of-3", LianaDescriptor::new(multiple_recovery), &secp);
+
+    let taproot_multi_a_multiple_recovery = LianaPolicy::new(
+        multi(&roots, 0, 2, &[0, 1, 2]),
+        BTreeMap::from([
+            (42, multi(&roots, 1, 2, &[0, 1, 2])),
+            (43, multi(&roots, 2, 3, &[0, 1, 2])),
+            (1678, multi(&roots, 3, 1, &[0, 1, 2])),
+        ]),
+    ).expect("valid Taproot multi_a policy with multiple recovery paths");
+    let generated = LianaDescriptor::new(taproot_multi_a_multiple_recovery);
+    let reparsed = LianaDescriptor::from_str(&generated.to_string())
+        .expect("generated Taproot multi_a descriptor must parse through Liana");
+    let inferred = reparsed.policy();
+    assert!(matches!(inferred.primary_path(), PathInfo::Multi(2, keys) if keys.len() == 3));
+    assert_eq!(inferred.recovery_paths().keys().copied().collect::<Vec<_>>(), vec![42, 43, 1678]);
+    assert!(matches!(inferred.recovery_paths().get(&42), Some(PathInfo::Multi(2, keys)) if keys.len() == 3));
+    assert!(matches!(inferred.recovery_paths().get(&43), Some(PathInfo::Multi(3, keys)) if keys.len() == 3));
+    assert!(matches!(inferred.recovery_paths().get(&1678), Some(PathInfo::Multi(1, keys)) if keys.len() == 3));
+    emit(
+        "taproot-multi-a-multiple-recovery",
+        "2-of-3 primary; multi_a recoveries older(42) 2-of-3, older(43) 3-of-3, older(1678) 1-of-3",
+        reparsed,
+        &secp,
+    );
 }
