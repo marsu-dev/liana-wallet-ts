@@ -1,5 +1,6 @@
 import { Output } from '@bitcoinerlab/descriptors';
 import { networks, type Network as BitcoinNetwork } from 'bitcoinjs-lib';
+import { WalletDerivationError } from './errors.js';
 import type { Network } from './bip32.js';
 import type { WalletDescriptor } from './liana.js';
 import { splitDescriptorChecksum } from './descriptors.js';
@@ -15,7 +16,7 @@ function derive(body: string, index: number, network: Network, change?: number):
   return { address: output.getAddress(), scriptPubKey: Uint8Array.from(output.getScriptPubKey()), index, network };
 }
 function assertIndex(index: number): void {
-  if (!Number.isInteger(index) || index < 0 || index >= 0x80000000) throw new Error('Address index must be a non-hardened BIP32 index');
+  if (!Number.isInteger(index) || index < 0 || index >= 0x80000000) throw new WalletDerivationError('INVALID_INDEX', 'Address index must be a non-hardened BIP32 index');
 }
 export function deriveDescriptorAddress(descriptor: string, index: number, network: Network): DerivedDescriptorOutput {
   assertIndex(index);

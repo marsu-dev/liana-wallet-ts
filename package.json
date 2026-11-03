@@ -4,10 +4,10 @@
   "description": "Watch-only TypeScript derivation for Liana Bitcoin wallets",
   "license": "MIT",
   "type": "module",
-  "engines": { "node": ">=20" },
+  "engines": { "node": ">=20.19.0" },
   "exports": { ".": "./dist/index.js" },
   "types": "./dist/index.d.ts",
-  "files": ["dist", "README.md", "LICENSE"],
+  "files": ["dist", "README.md", "LICENSE", "SECURITY.md", "docs/COMPATIBILITY.md"],
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "test": "vitest run",

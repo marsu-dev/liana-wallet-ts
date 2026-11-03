@@ -1,3 +1,4 @@
+import { WalletDerivationError } from './errors.js';
 const INPUT_CHARSET = "0123456789()[],'/*abcdefgh@:$%{}IJKLMNOPQRSTUVWXYZ&+-.;<=>?!^_|~ijklmnopqrstuvwxyzABCDEFGH`#\"\\ ";
 const CHECKSUM_CHARSET = 'qpzry9x8gf2tvdw0s3jn54khce6mua7l';
 const GENERATORS = [0xf5dee51989n, 0xa9fdca3312n, 0x1bab10e32dn, 0x3706b1677an, 0x644d626ffdn];
@@ -28,9 +29,9 @@ function polymod(checksum: bigint, value: number): bigint {
 }
 export function splitDescriptorChecksum(text: string): { body: string; checksum: string } {
   const delimiter = text.lastIndexOf('#');
-  if (delimiter < 0) throw new Error('Descriptor checksum is required');
+  if (delimiter < 0) throw new WalletDerivationError('CHECKSUM_REQUIRED', 'Descriptor checksum is required');
   const body = text.slice(0, delimiter), checksum = text.slice(delimiter + 1);
-  if (!/^[a-z0-9]{8}$/.test(checksum) || descriptorChecksum(body) !== checksum) throw new Error('Invalid descriptor checksum');
+  if (!/^[a-z0-9]{8}$/.test(checksum) || descriptorChecksum(body) !== checksum) throw new WalletDerivationError('INVALID_CHECKSUM', 'Invalid descriptor checksum');
   return { body, checksum };
 }
 export function parseMultipath(expression: string): DescriptorKeyExpression {
