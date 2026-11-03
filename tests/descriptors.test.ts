@@ -107,6 +107,10 @@ describe('descriptor primitives', () => {
     let checked = 0;
     for (const item of rustMultisigFixture.cases) {
       const wallet = parseLianaDescriptor(item.descriptor, 'mainnet');
+      const body = splitDescriptorChecksum(item.descriptor).body;
+      expect(wallet.original).toBe(item.descriptor);
+      expect(wallet.ast.source).toBe(body);
+      assertAstSourceRanges(wallet.ast.root, body);
       for (const branch of ['receive', 'change'] as const) {
         for (const index of [0, 1]) {
           const actual = deriveWalletAddress(wallet, branch, index);
@@ -195,6 +199,10 @@ describe('descriptor primitives', () => {
     for (const item of [legacyWshFixture, legacyWshMultisigFixture, legacyWshMultipleRecoveryFixture]) {
       expect(item.provenance).toMatchObject({ lianaCommit: '398e622596e7530a328de3027cb2c09905f708c6', miniscriptVersion: '11.2.0', network: 'mainnet' });
       const wallet = parseLianaDescriptor(item.descriptor, 'mainnet');
+      const body = splitDescriptorChecksum(item.descriptor).body;
+      expect(wallet.original).toBe(item.descriptor);
+      expect(wallet.ast.source).toBe(body);
+      assertAstSourceRanges(wallet.ast.root, body);
       for (const branch of ['receive', 'change'] as const) {
         for (const index of [0, 1]) {
           const actual = deriveWalletAddress(wallet, branch, index);
