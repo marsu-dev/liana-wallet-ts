@@ -18,7 +18,7 @@ npm run typecheck
 npm run build
 ```
 
-The API is exported from `src/index.ts`. For public-only use, import an account xpub with its master fingerprint and origin path, then derive non-hardened branch/index keys. Do not provide or store a mnemonic in applications that only need to watch an existing wallet.
+The API is exported from `src/index.ts`. For public-only use, import an account xpub with its master fingerprint and origin path, then derive non-hardened branch/index keys. `parseLianaDescriptor(text, network)` preserves the exact input and validates the checksum and descriptor shape; `deriveWalletAddress(wallet, 'receive' | 'change', index)` selects the first or second ordered multipath choice without rewriting the source descriptor. Do not provide or store a mnemonic in applications that only need to watch an existing wallet.
 
 ## Security
 

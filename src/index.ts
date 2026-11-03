@@ -5,5 +5,5 @@ export interface WalletDescriptor { network: Network; original: string; checksum
 export interface DerivedAddress { address: string; scriptPubKey: Uint8Array; branch: 'receive' | 'change'; index: number; }
 export { deriveAccountXpub, deriveChildKey, importAccountXpub, mnemonicToSeed } from './bip32.js';
 export { descriptorChecksum, parseMultipath, splitDescriptorChecksum } from './descriptors.js';
-export { deriveDescriptorAddress } from './address.js';
+export { deriveDescriptorAddress, deriveWalletAddress } from './address.js';
 export { parseLianaDescriptor } from './liana.js';

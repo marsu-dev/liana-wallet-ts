@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { descriptorChecksum, splitDescriptorChecksum, parseMultipath, deriveDescriptorAddress, parseLianaDescriptor } from '../src/index.js';
+import { descriptorChecksum, splitDescriptorChecksum, parseMultipath, deriveDescriptorAddress, parseLianaDescriptor, deriveWalletAddress } from '../src/index.js';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
@@ -31,6 +31,13 @@ describe('descriptor primitives', () => {
     expect(fixture.change.addresses0to9).toHaveLength(10);
     for (const [index, address] of fixture.receive.addresses0to9.entries()) expect(deriveDescriptorAddress(fixture.receive.descriptor, index, 'signet').address).toBe(address);
     for (const [index, address] of fixture.change.addresses0to9.entries()) expect(deriveDescriptorAddress(fixture.change.descriptor, index, 'signet').address).toBe(address);
+  });
+  it('maps receive/change to the ordered values in a multipath descriptor', () => {
+    const body = fixture.receive.descriptor.slice(0, fixture.receive.descriptor.lastIndexOf('#')).replaceAll('/0/*', '/<0;1>/*');
+    const multipath = `${body}#${descriptorChecksum(body)}`;
+    const wallet = parseLianaDescriptor(multipath, 'signet');
+    expect(deriveWalletAddress(wallet, 'receive', 0).address).toBe(fixture.receive.addressIndex0);
+    expect(deriveWalletAddress(wallet, 'change', 0).address).toBe(fixture.change.addressIndex0);
   });
   it('imports a descriptor without rewriting it and extracts signer origins', () => {
     const wallet = parseLianaDescriptor(fixture.receive.descriptor, 'signet');
