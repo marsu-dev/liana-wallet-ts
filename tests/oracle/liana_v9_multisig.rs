@@ -1,26 +1,40 @@
 use liana::descriptors::{LianaDescriptor, LianaPolicy, PathInfo};
-use miniscript::bitcoin::{self, bip32::{Fingerprint, Xpriv, Xpub}, Network};
+use miniscript::bitcoin::{self, bip32::{Fingerprint, Xpub}, Network};
 use miniscript::descriptor::DescriptorPublicKey;
 use std::{collections::BTreeMap, str::FromStr};
 
 struct RootKey { fingerprint: Fingerprint, xpub: Xpub }
 
-fn root_keys(secp: &bitcoin::secp256k1::Secp256k1<bitcoin::secp256k1::All>) -> Vec<RootKey> {
-    (1u8..=5).map(|n| {
-        let seed = [n; 32];
-        let xpriv = Xpriv::new_master(Network::Bitcoin, &seed).expect("deterministic test root");
-        RootKey { fingerprint: xpriv.fingerprint(secp), xpub: Xpub::from_priv(secp, &xpriv) }
+fn root_keys() -> Vec<RootKey> {
+    // Public-only deterministic test roots; the fixture and generator retain no seed or private key.
+    const ROOTS: &[(&str, &str)] = &[
+        ("4ba43603", "xpub661MyMwAqRbcEtUEgdXRTY6dJQG9fRgs7C5QomqETKMYBJVtSGpRqyHSmhWy8snovPd5oWZgQ14zUquxbxu7Z1umuXbN5VDpUL1QobD5xUY"),
+        ("8dfc9b34", "xpub661MyMwAqRbcGFeMhhkrJL6Yj3YKQFNZQSM2BAvoMmhdjNKBh43n5v3c4YT5dFtjkirfhqQHMd22br7cHAQXAV8cZdicedZJkNweja4WWBK"),
+        ("56c4fac3", "xpub661MyMwAqRbcFNWTmtbxHaYsjddAazfBQ51wm61veSzW3z2N7s1U7M9epMGsedj3unJKhXBY2sxWpQutwrZnpFuWe2vVVvLig8nFT4nmG67"),
+        ("83bfab59", "xpub661MyMwAqRbcGqhD7PpVgkvot7Cm4CE94VkA9q1ht6XeAe4Vd9JjnHRTYYgzqgxAY6cxVd1CMh7GdKasJAms53sRu3GvpTnWuWxTiEf4vjh"),
+    ];
+    ROOTS.iter().map(|(fingerprint, xpub)| RootKey {
+        fingerprint: Fingerprint::from_str(fingerprint).expect("valid root fingerprint"),
+        xpub: Xpub::from_str(xpub).expect("valid public root xpub"),
     }).collect()
 }
 
-fn key(roots: &[RootKey], root: usize, purpose: u32) -> DescriptorPublicKey {
+fn key_with_branches(roots: &[RootKey], root: usize, purpose: u32, branches: (u32, u32)) -> DescriptorPublicKey {
     let key = &roots[root];
-    let text = format!("[{}]{}/{}/<0;1>/*", key.fingerprint, key.xpub, purpose);
+    let text = format!("[{}]{}/{}/<{};{}>/*", key.fingerprint, key.xpub, purpose, branches.0, branches.1);
     DescriptorPublicKey::from_str(&text).expect("valid multipath descriptor key")
 }
 
+fn key(roots: &[RootKey], root: usize, purpose: u32) -> DescriptorPublicKey {
+    key_with_branches(roots, root, purpose, (0, 1))
+}
+
+fn multi_with_branches(roots: &[RootKey], purpose: u32, threshold: usize, members: &[usize], branches: (u32, u32)) -> PathInfo {
+    PathInfo::Multi(threshold, members.iter().map(|i| key_with_branches(roots, *i, purpose, branches)).collect())
+}
+
 fn multi(roots: &[RootKey], purpose: u32, threshold: usize, members: &[usize]) -> PathInfo {
-    PathInfo::Multi(threshold, members.iter().map(|i| key(roots, *i, purpose)).collect())
+    multi_with_branches(roots, purpose, threshold, members, (0, 1))
 }
 
 fn emit(case_id: &str, policy: &str, liana: LianaDescriptor, secp: &bitcoin::secp256k1::Secp256k1<bitcoin::secp256k1::All>) {
@@ -40,7 +54,7 @@ fn emit(case_id: &str, policy: &str, liana: LianaDescriptor, secp: &bitcoin::sec
 
 fn main() {
     let secp = bitcoin::secp256k1::Secp256k1::new();
-    let roots = root_keys(&secp);
+    let roots = root_keys();
 
     let single_primary = LianaPolicy::new(
         PathInfo::Single(key(&roots, 0, 0)),
@@ -53,6 +67,12 @@ fn main() {
         BTreeMap::from([(26352, multi(&roots, 1, 2, &[0, 1, 2]))]),
     ).expect("valid one-recovery Liana policy");
     emit("multisig-one-recovery", "3-of-3 primary; 2-of-3 recovery older(26352)", LianaDescriptor::new(one_recovery), &secp);
+
+    let distinct_branch_values = LianaPolicy::new(
+        multi_with_branches(&roots, 0, 3, &[0, 1, 2], (0, 1)),
+        BTreeMap::from([(26352, multi_with_branches(&roots, 1, 2, &[0, 1, 2], (2, 3)))]),
+    ).expect("valid Liana policy with distinct multipath values");
+    emit("multisig-distinct-branch-values", "3-of-3 primary branches <0;1>; 2-of-3 recovery older(26352) branches <2;3>", LianaDescriptor::new(distinct_branch_values), &secp);
 
     let multiple_recovery = LianaPolicy::new(
         multi(&roots, 0, 2, &[0, 1, 2]),

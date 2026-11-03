@@ -4,7 +4,7 @@ import json
 import sys
 from pathlib import Path
 
-EXPECTED_IDS = ["single-primary-recovery", "multisig-one-recovery", "multisig-multiple-recovery"]
+EXPECTED_IDS = ["single-primary-recovery", "multisig-one-recovery", "multisig-distinct-branch-values", "multisig-multiple-recovery"]
 EXPECTED_BRANCHES = {"receive", "change"}
 EXPECTED_INDICES = {"0", "1"}
 

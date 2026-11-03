@@ -6,13 +6,13 @@ Construire un package ESM TypeScript pour Node.js ≥20.19 qui importe un descri
 
 ## Avancement constaté
 
-- **Phase 0 — validée :** Liana v9.0 et Miniscript 11.2.0 sont épinglés ; la fixture Signet publique clé unique et trois vecteurs générés par Rust (clé unique, multisig avec une récupération, multisig avec plusieurs récupérations) sont intégrés avec leur provenance.
+- **Phase 0 — validée :** Liana v9.0 et Miniscript 11.2.0 sont épinglés ; la fixture Signet publique clé unique et quatre cas Rust (clé unique, multisig à une récupération, branches multipath distinctes, plusieurs récupérations) sont intégrés avec provenance. Le harness ne conserve que des xpubs/fingerprints publics.
 - **Phase 1 — socle validé :** package ESM strict, CI, erreurs typées et installation `npm ci` reproductible ; audit npm courant sans vulnérabilités signalées.
 - **Phase 2 — implémentée et testée :** dérivation BIP32/BIP39, import xpub avec origines, dérivation publique non durcie et vérification réseau.
-- **Phase 3 — partielle :** checksum, origines, branches multipath et texte source préservés ; validation Taproot Liana améliorée, mais parité complète du parseur et toutes les règles de politique Liana restent à établir.
-- **Phase 4 — validée pour les vecteurs couverts :** adresses et scripts concordent avec Rust pour trois politiques (clé unique, multisig à une récupération, multisig à plusieurs récupérations), receive/change indices 0 et 1 ; compatibilité générale non revendiquée.
+- **Phase 3 — partielle :** checksum, présence et cohérence des origines, choix multipath conservés, contrôle de la structure Taproot, timelocks de récupération distincts et présence d’un chemin primaire avec NUMS ; doublons de fingerprints rejetés dans les chemins testés. L’analyse Miniscript/Liana complète reste à établir ; l’importateur n’accepte actuellement que `tr()` (P2WSH non pris en charge).
+- **Phase 4 — validée pour les vecteurs couverts :** 16 paires adresse/scriptPubKey concordent octet par octet avec Rust pour quatre politiques Taproot, dont `<0;1>` primaire et `<2;3>` en récupération, receive/change indices 0 et 1 ; compatibilité générale non revendiquée.
 - **Phase 5 — implémentée :** API et CLI watch-only testées, incluant receive/change.
-- **Phase 6 — partielle :** installation propre, tests, typecheck, build, CLI et contenu du package vérifiés ; l’audit complet de compatibilité des formes de descripteurs, réseaux et erreurs reste à faire avant toute version compatible.
+- **Phase 6 — partielle :** tests, typecheck, build, CLI et contenu du package vérifiés ; l’audit complet de compatibilité des formes de descripteurs, réseaux et erreurs reste à faire avant toute version compatible.
 
 ## Phase 0 — Références et critères de compatibilité
 

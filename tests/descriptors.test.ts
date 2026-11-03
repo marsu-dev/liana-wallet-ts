@@ -23,6 +23,12 @@ describe('descriptor primitives', () => {
   it('uses the descriptor library checksum implementation', () => {
     expect(descriptorChecksum).toBe(referenceDescriptorChecksum);
   });
+  it('reports typed failures for malformed multipath syntax and metadata', () => {
+    expect(parseMultipath('[0123abcd]tpubABC/<0;1>/*').originPath).toBe('');
+    expect(() => parseMultipath('not a descriptor')).toThrowError(expect.objectContaining({ code: 'INVALID_DESCRIPTOR' }));
+    expect(() => parseMultipath('[0123abcd/invalid]tpubABC/<0;1>/*')).toThrowError(expect.objectContaining({ code: 'INVALID_ORIGIN' }));
+    expect(() => parseMultipath('[0123abcd]tpubABC/<1;1>/*')).toThrowError(expect.objectContaining({ code: 'INVALID_PATH' }));
+  });
   it('computes the Bitcoin Core checksum vector for raw(deadbeef)', () => {
     expect(descriptorChecksum('raw(deadbeef)')).toBe('89f8spxm');
   });
@@ -55,7 +61,7 @@ describe('descriptor primitives', () => {
   });
   it('matches the pinned Liana Rust Taproot single-key and multisig address/script vectors', () => {
     expect(rustMultisigFixture.provenance).toMatchObject({ lianaCommit: '398e622596e7530a328de3027cb2c09905f708c6', miniscriptVersion: '11.2.0', network: 'mainnet' });
-    expect(rustMultisigFixture.cases.map((item) => item.id)).toEqual(['single-primary-recovery', 'multisig-one-recovery', 'multisig-multiple-recovery']);
+    expect(rustMultisigFixture.cases.map((item) => item.id)).toEqual(['single-primary-recovery', 'multisig-one-recovery', 'multisig-distinct-branch-values', 'multisig-multiple-recovery']);
     let checked = 0;
     for (const item of rustMultisigFixture.cases) {
       const wallet = parseLianaDescriptor(item.descriptor, 'mainnet');
@@ -69,7 +75,15 @@ describe('descriptor primitives', () => {
         }
       }
     }
-    expect(checked).toBe(12);
+    expect(checked).toBe(16);
+  });
+  it('reports every selected multipath child index in descriptor order', () => {
+    const item = rustMultisigFixture.cases.find((entry) => entry.id === 'multisig-distinct-branch-values')!;
+    const wallet = parseLianaDescriptor(item.descriptor, 'mainnet');
+    const receive = deriveWalletAddress(wallet, 'receive', 0);
+    const change = deriveWalletAddress(wallet, 'change', 0);
+    expect(receive.branchIndexes).toEqual([0, 2, 2, 2, 0, 0, 0]);
+    expect(change.branchIndexes).toEqual([1, 3, 3, 3, 1, 1, 1]);
   });
   it('builds a NUMS internal xpub from ordered input extended public keys', () => {
     const wallet = parseLianaDescriptor(fixture.receive.descriptor, 'signet');
@@ -99,6 +113,46 @@ describe('descriptor primitives', () => {
     const derived = deriveWalletAddress(wallet, 'receive', 0);
     expect(derived.address.startsWith('tb1p')).toBe(true);
     expect(derived.scriptPubKey).toHaveLength(34);
+  });
+  it('rejects a Taproot recovery tree with no always-available primary path', () => {
+    const wallet = parseLianaDescriptor(rustMultisigFixture.cases[0]!.descriptor, 'mainnet');
+    const recovery = wallet.signers[1]!;
+    const origin = recovery.originPath === 'm' ? recovery.masterFingerprint : `${recovery.masterFingerprint}/${recovery.originPath.slice(2)}`;
+    const key = `[${origin}]${recovery.xpub}/1/<0;1>/*`;
+    const internal = constructUnspendableInternalXpub([recovery.xpub], 'mainnet');
+    const body = `tr(${internal.descriptorKey},and_v(v:pk(${key}),older(36)))`;
+    const descriptor = `${body}#${descriptorChecksum(body)}`;
+    try { parseLianaDescriptor(descriptor, 'mainnet'); throw new Error('expected invalid Liana policy error'); }
+    catch (error) {
+      expect(error).toBeInstanceOf(WalletDerivationError);
+      expect((error as WalletDerivationError).code).toBe('INVALID_DESCRIPTOR');
+    }
+  });
+  it('rejects duplicate signer origins within one primary spending path', () => {
+    const template = parseLianaDescriptor(fixture.receive.descriptor, 'signet');
+    const [primary, recovery] = template.signers;
+    const key = (signer: typeof primary, branch: number) => `[${signer!.masterFingerprint}/${signer!.originPath.slice(2)}]${signer!.xpub}/${branch}/<0;1>/*`;
+    const recoveryKey = key(recovery, 1);
+    const primaryKey = key(primary, 0);
+    const tree = `{and_v(v:pk(${recoveryKey}),older(36)),multi_a(2,${primaryKey},${primaryKey})}`;
+    const internal = constructUnspendableInternalXpub([recovery!.xpub, primary!.xpub, primary!.xpub], 'signet');
+    const body = `tr(${internal.descriptorKey},${tree})`;
+    const descriptor = `${body}#${descriptorChecksum(body)}`;
+    expect(() => parseLianaDescriptor(descriptor, 'signet')).toThrowError(expect.objectContaining({ code: 'INVALID_DESCRIPTOR' }));
+  });
+  it('rejects distinct recovery leaves with the same relative timelock', () => {
+    const template = parseLianaDescriptor(fixture.receive.descriptor, 'signet');
+    const [primary, recovery] = template.signers;
+    const key = (signer: typeof primary, branch: number) => `[${signer!.masterFingerprint}/${signer!.originPath.slice(2)}]${signer!.xpub}/${branch}/<0;1>/*`;
+    const recoveryA = key(primary, 1);
+    const recoveryB = key(recovery, 1);
+    const primaryA = key(primary, 0);
+    const primaryB = key(recovery, 0);
+    const tree = `{and_v(v:pk(${recoveryA}),older(36)),{and_v(v:pk(${recoveryB}),older(36)),multi_a(2,${primaryA},${primaryB})}}`;
+    const internal = constructUnspendableInternalXpub([primary!.xpub, recovery!.xpub, primary!.xpub, recovery!.xpub], 'signet');
+    const body = `tr(${internal.descriptorKey},${tree})`;
+    const descriptor = `${body}#${descriptorChecksum(body)}`;
+    expect(() => parseLianaDescriptor(descriptor, 'signet')).toThrowError(expect.objectContaining({ code: 'INVALID_DESCRIPTOR' }));
   });
   it('rejects a Taproot key-only descriptor with no Liana recovery path', () => {
     const signer = parseLianaDescriptor(fixture.receive.descriptor, 'signet').signers[0]!;
@@ -150,6 +204,26 @@ describe('descriptor primitives', () => {
     expect(wallet.network).toBe('signet');
     expect(wallet.signers).toHaveLength(2);
     expect(wallet.signers[0]).toMatchObject({ masterFingerprint: '07fd816d', originPath: "m/48'/1'/0'/2'", network: 'signet' });
+  });
+  it('rejects a Liana signer key missing its master-fingerprint origin', () => {
+    const { body } = splitDescriptorChecksum(rustMultisigFixture.cases[0]!.descriptor);
+    const originStart = body.indexOf('[');
+    const originEnd = body.indexOf(']', originStart);
+    const missingOrigin = `${body.slice(0, originStart)}${body.slice(originEnd + 1)}`;
+    expect(originEnd).toBeGreaterThan(originStart);
+    const descriptor = `${missingOrigin}#${descriptorChecksum(missingOrigin)}`;
+    try { parseLianaDescriptor(descriptor, 'mainnet'); throw new Error('expected missing-origin error'); }
+    catch (error) {
+      expect(error).toBeInstanceOf(WalletDerivationError);
+      expect((error as WalletDerivationError).code).toBe('INVALID_ORIGIN');
+    }
+  });
+  it('rejects private-key material in watch-only descriptors before parsing output scripts', () => {
+    const { body } = splitDescriptorChecksum(fixture.receive.descriptor);
+    const fakeWif = `K${'1'.repeat(51)}`;
+    const bodyWithPrivateKey = body.replace(/tpub[1-9A-HJ-NP-Za-km-z]+/, fakeWif);
+    const descriptor = `${bodyWithPrivateKey}#${descriptorChecksum(bodyWithPrivateKey)}`;
+    expect(() => parseLianaDescriptor(descriptor, 'signet')).toThrowError(expect.objectContaining({ code: 'INVALID_EXTENDED_KEY' }));
   });
   it('rejects a descriptor with a modified checksum', () => {
     expect(() => parseLianaDescriptor(fixture.receive.descriptor.replace('#22y0dhdd', '#00000000'), 'signet')).toThrow(/checksum/i);

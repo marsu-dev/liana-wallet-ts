@@ -3,9 +3,13 @@ import { networks, type Network as BitcoinNetwork } from 'bitcoinjs-lib';
 import { WalletDerivationError } from './errors.js';
 import { assertNetwork, type Network } from './bip32.js';
 import type { WalletDescriptor } from './liana.js';
-import { splitDescriptorChecksum } from './descriptors.js';
+import { splitDescriptorChecksum, selectMultipathBranch } from './descriptors.js';
 export interface DerivedDescriptorOutput { address: string; scriptPubKey: Uint8Array; index: number; network: Network; }
-export interface DerivedWalletAddress extends DerivedDescriptorOutput { branch: 'receive' | 'change'; branchIndex: number; }
+export interface DerivedWalletAddress extends DerivedDescriptorOutput {
+  branch: 'receive' | 'change';
+  /** One selected BIP32 branch value per multipath key occurrence, in descriptor order. */
+  branchIndexes: readonly number[];
+}
 function bitcoinNetwork(network: Network): BitcoinNetwork {
   assertNetwork(network);
   if (network === 'mainnet') return networks.bitcoin;
@@ -31,15 +35,10 @@ export function deriveWalletAddress(wallet: WalletDescriptor, branch: 'receive' 
   if (branch !== 'receive' && branch !== 'change') throw new WalletDerivationError('INVALID_PATH', `Unknown wallet branch: ${String(branch)}`);
   assertIndex(index);
   const { body } = splitDescriptorChecksum(wallet.original);
-  const choices = [...body.matchAll(/<(\d+);(\d+)>/g)];
-  if (choices.length === 0) throw new WalletDerivationError('INVALID_DESCRIPTOR', 'Wallet descriptor has no two-choice multipath derivation');
-  const values = choices.map((match) => [Number(match[1]), Number(match[2])] as const);
-  if (values.some(([receive, change]) => !Number.isSafeInteger(receive) || !Number.isSafeInteger(change) || receive >= 0x80000000 || change >= 0x80000000 || receive === change)) throw new WalletDerivationError('INVALID_PATH', 'Invalid multipath branch indexes');
-  const [receiveIndex, changeIndex] = values[0]!;
-  if (values.some(([receive, change]) => receive !== receiveIndex || change !== changeIndex)) throw new WalletDerivationError('INVALID_PATH', 'Descriptor multipath choices are inconsistent across keys');
-  const position = branch === 'receive' ? 0 : 1;
+  const selection = branch === 'receive' ? 0 : 1;
+  const selected = selectMultipathBranch(body, selection);
   try {
-    const result = derive(body, index, wallet.network, position);
-    return { ...result, branch, branchIndex: values[0]![position] };
+    const result = derive(selected.body, index, wallet.network);
+    return { ...result, branch, branchIndexes: selected.branchIndexes };
   } catch (error) { throw new WalletDerivationError('UNSUPPORTED_DESCRIPTOR', `Unable to derive ${branch} wallet address: ${error instanceof Error ? error.message : String(error)}`, { cause: error }); }
 }

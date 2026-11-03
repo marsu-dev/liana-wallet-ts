@@ -1,6 +1,6 @@
 # Liana v9 Rust descriptor oracle
 
-The fixture `../fixtures/liana-v9-rust-taproot-multisig.json` was generated from the pinned Liana Rust implementation, not from the TypeScript package. It contains three `LianaPolicy::new` policies: a single-key primary with one single-key recovery path, a 3-of-3 primary with one 2-of-3 recovery leaf, and a 2-of-3 primary with three recovery paths. For each, Rust produced the descriptor plus receive/change addresses and exact `scriptPubKey` bytes at indices 0 and 1.
+The fixture `../fixtures/liana-v9-rust-taproot-multisig.json` was generated from the pinned Liana Rust implementation, not from the TypeScript package. It contains four `LianaPolicy::new` policies: a single-key primary with one single-key recovery path, a 3-of-3 primary with one 2-of-3 recovery leaf, a 3-of-3 primary using `<0;1>` with a 2-of-3 recovery using `<2;3>`, and a 2-of-3 primary with three recovery paths. For each, Rust produced the descriptor plus receive/change addresses and exact `scriptPubKey` bytes at indices 0 and 1.
 
 ## Provenance
 
@@ -8,7 +8,7 @@ The fixture `../fixtures/liana-v9-rust-taproot-multisig.json` was generated from
 - `Cargo.lock`: Miniscript `11.2.0`
 - Rust toolchain: `1.80.0`
 - Network: Bitcoin mainnet
-- Deterministic BIP32 roots use test-only seed arrays `[1; 32]` through `[5; 32]`; no seed or private key is checked in. The fixture contains only public descriptors and expected outputs.
+- The harness uses only public root fingerprints/xpubs retained in the generated descriptors; no seed or private key is stored in the generator or fixture.
 
 ## Reproduce
 
@@ -25,4 +25,4 @@ python3 tests/oracle/build_liana_v9_fixture.py "$REF/vectors.tsv" "$REF/rebuilt.
 cmp tests/fixtures/liana-v9-rust-taproot-multisig.json "$REF/rebuilt.json"
 ```
 
-The Rust generator calls Liana's `LianaPolicy::new` and `LianaDescriptor::new`, then derives through `receive_descriptor()` and `change_descriptor()`. The converter rejects missing/duplicate rows and requires both indices for both branches and both policies. The checked-in TypeScript test compares each Rust address and `scriptPubKey` exactly.
+The Rust generator calls Liana's `LianaPolicy::new` and `LianaDescriptor::new`, then derives through `receive_descriptor()` and `change_descriptor()`. The converter rejects missing/duplicate rows and requires both indices for both branches and all four policies. The checked-in TypeScript test compares all sixteen Rust address and `scriptPubKey` pairs exactly.
