@@ -4,7 +4,7 @@ import json
 import sys
 from pathlib import Path
 
-EXPECTED_IDS = ["legacy-single-primary-recovery", "legacy-2-of-3-primary-recovery"]
+EXPECTED_IDS = ["legacy-single-primary-recovery", "legacy-2-of-3-primary-recovery", "legacy-multiple-recovery"]
 BRANCHES = {"receive", "change"}
 INDICES = {"0", "1"}
 
@@ -46,6 +46,12 @@ def main() -> None:
     generators = {
         "legacy-single-primary-recovery": "LianaPolicy::new_legacy and LianaDescriptor::new; receive/change descriptors derived at indices 0 and 1 with verification-only secp256k1; address and script_pubkey from Rust",
         "legacy-2-of-3-primary-recovery": "LianaPolicy::new_legacy with 2-of-3 primary and 2-of-3 recovery; LianaDescriptor::new; receive/change derived at indices 0 and 1; address and script_pubkey from Rust",
+        "legacy-multiple-recovery": "LianaPolicy::new_legacy with 2-of-3 primary; recovery older(42) single-key, older(43) 2-of-3, older(1678) 1-of-3; LianaDescriptor::new; receive/change derived at indices 0 and 1; address and script_pubkey from Rust",
+    }
+    filenames = {
+        "legacy-single-primary-recovery": "liana-v9-rust-legacy-wsh.json",
+        "legacy-2-of-3-primary-recovery": "liana-v9-rust-legacy-wsh-multisig.json",
+        "legacy-multiple-recovery": "liana-v9-rust-legacy-wsh-multiple-recovery.json",
     }
     output_dir.mkdir(parents=True, exist_ok=True)
     for case_id in EXPECTED_IDS:
@@ -64,8 +70,7 @@ def main() -> None:
             "descriptor": cases[case_id]["descriptor"],
             "expected": cases[case_id]["expected"],
         }
-        filename = "liana-v9-rust-legacy-wsh.json" if case_id == EXPECTED_IDS[0] else "liana-v9-rust-legacy-wsh-multisig.json"
-        (output_dir / filename).write_text(json.dumps(fixture, indent=2) + "\n")
+        (output_dir / filenames[case_id]).write_text(json.dumps(fixture, indent=2) + "\n")
     print(f"wrote {len(cases)} cases, {len(cases) * 4} address/script pairs to {output_dir}")
 
 

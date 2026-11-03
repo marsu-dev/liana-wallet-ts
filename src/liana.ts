@@ -3,8 +3,8 @@ import { networks, type Network as BitcoinNetwork } from 'bitcoinjs-lib';
 import { importAccountXpub, assertNetwork, type Network, type AccountKey } from './bip32.js';
 import { WalletDerivationError } from './errors.js';
 import { constructUnspendableInternalXpub } from './taproot.js';
-import { splitDescriptorChecksum, selectMultipathBranch } from './descriptors.js';
-export interface WalletDescriptor { network: Network; original: string; checksum: string; signers: AccountKey[]; }
+import { splitDescriptorChecksum, selectMultipathBranch, parseDescriptorAst, type DescriptorAst } from './descriptors.js';
+export interface WalletDescriptor { network: Network; original: string; checksum: string; signers: AccountKey[]; ast: DescriptorAst; }
 const KEY_WITH_ORIGIN = /\[([0-9a-fA-F]{8}(?:\/(?:0|[1-9]\d*)['hH]?)*?)\]((?:xpub|tpub)[1-9A-HJ-NP-Za-km-z]+)/g;
 function bitcoinNetwork(network: Network): BitcoinNetwork {
   if (network === 'mainnet') return networks.bitcoin;
@@ -134,9 +134,11 @@ function validateLianaWshPolicy(body: string): void {
   const timelocks = new Set<number>();
   function walk(expression: string): string {
     const call = descriptorCall(expression);
-    if (call?.name === 'or_d') {
-      if (call.args.length !== 2) throw new WalletDerivationError('INVALID_DESCRIPTOR', 'Liana P2WSH recovery branches must be binary or_d policies');
-      const recovery = descriptorCall(call.args[1]!);
+    if (call?.name === 'or_d' || call?.name === 'or_i') {
+      if (call.args.length !== 2) throw new WalletDerivationError('INVALID_DESCRIPTOR', 'Liana P2WSH recovery branches must be binary OR policies');
+      const recoveryExpression = call.name === 'or_d' ? call.args[1]! : call.args[0]!;
+      const previousExpression = call.name === 'or_d' ? call.args[0]! : call.args[1]!;
+      const recovery = descriptorCall(recoveryExpression);
       if (recovery?.name !== 'and_v' || recovery.args.length !== 2 || !recovery.args[0]!.startsWith('v:')) {
         throw new WalletDerivationError('INVALID_DESCRIPTOR', 'Liana P2WSH recovery branches must pair signer keys with older()');
       }
@@ -151,7 +153,7 @@ function validateLianaWshPolicy(body: string): void {
       timelocks.add(timelock);
       if (!/(?:xpub|tpub)[1-9A-HJ-NP-Za-km-z]+/.test(recoveryPolicy) || !isLianaKeyPolicy(recoveryPolicy)) throw new WalletDerivationError('INVALID_DESCRIPTOR', 'Each Liana recovery path must be a key-only policy');
       rejectDuplicateOrigins(originFingerprints(recoveryPolicy), 'recovery');
-      return walk(call.args[0]!);
+      return walk(previousExpression);
     }
     if (/\bolder\s*\(/.test(expression) || !/(?:xpub|tpub)[1-9A-HJ-NP-Za-km-z]+/.test(expression) || !isLianaKeyPolicy(expression)) {
       throw new WalletDerivationError('INVALID_DESCRIPTOR', 'Liana P2WSH requires a key-only untimelocked primary path and timelocked recovery paths');
@@ -241,5 +243,5 @@ export function parseLianaDescriptor(text: string, network: Network): WalletDesc
     if (error instanceof WalletDerivationError) throw error;
     throw new WalletDerivationError('UNSUPPORTED_DESCRIPTOR', `Invalid or unsupported Liana output descriptor: ${error instanceof Error ? error.message : String(error)}`, { cause: error });
   }
-  return { network, original: text, checksum, signers };
+  return { network, original: text, checksum, signers, ast: parseDescriptorAst(body) };
 }

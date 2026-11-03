@@ -1,0 +1,36 @@
+{
+  "id": "liana-v9-rust-legacy-multiple-recovery-vectors",
+  "provenance": {
+    "lianaVersion": "9.0.0",
+    "lianaCommit": "398e622596e7530a328de3027cb2c09905f708c6",
+    "miniscriptVersion": "11.2.0",
+    "rustc": "1.80.0 (051478957 2024-07-21)",
+    "network": "mainnet",
+    "generator": "LianaPolicy::new_legacy with 2-of-3 primary; recovery older(42) single-key, older(43) 2-of-3, older(1678) 1-of-3; LianaDescriptor::new; receive/change derived at indices 0 and 1; address and script_pubkey from Rust",
+    "testKeys": "Descriptor includes only public test xpubs; no seed or private key is stored",
+    "secretsOmitted": true
+  },
+  "descriptor": "wsh(or_i(and_v(v:thresh(1,pkh([4ba43603]xpub661MyMwAqRbcEtUEgdXRTY6dJQG9fRgs7C5QomqETKMYBJVtSGpRqyHSmhWy8snovPd5oWZgQ14zUquxbxu7Z1umuXbN5VDpUL1QobD5xUY/4/<0;1>/*),a:pkh([8dfc9b34]xpub661MyMwAqRbcGFeMhhkrJL6Yj3YKQFNZQSM2BAvoMmhdjNKBh43n5v3c4YT5dFtjkirfhqQHMd22br7cHAQXAV8cZdicedZJkNweja4WWBK/4/<0;1>/*),a:pkh([56c4fac3]xpub661MyMwAqRbcFNWTmtbxHaYsjddAazfBQ51wm61veSzW3z2N7s1U7M9epMGsedj3unJKhXBY2sxWpQutwrZnpFuWe2vVVvLig8nFT4nmG67/4/<0;1>/*)),older(1678)),or_i(and_v(v:thresh(2,pkh([4ba43603]xpub661MyMwAqRbcEtUEgdXRTY6dJQG9fRgs7C5QomqETKMYBJVtSGpRqyHSmhWy8snovPd5oWZgQ14zUquxbxu7Z1umuXbN5VDpUL1QobD5xUY/3/<0;1>/*),a:pkh([8dfc9b34]xpub661MyMwAqRbcGFeMhhkrJL6Yj3YKQFNZQSM2BAvoMmhdjNKBh43n5v3c4YT5dFtjkirfhqQHMd22br7cHAQXAV8cZdicedZJkNweja4WWBK/3/<0;1>/*),a:pkh([56c4fac3]xpub661MyMwAqRbcFNWTmtbxHaYsjddAazfBQ51wm61veSzW3z2N7s1U7M9epMGsedj3unJKhXBY2sxWpQutwrZnpFuWe2vVVvLig8nFT4nmG67/3/<0;1>/*)),older(43)),or_d(multi(2,[4ba43603]xpub661MyMwAqRbcEtUEgdXRTY6dJQG9fRgs7C5QomqETKMYBJVtSGpRqyHSmhWy8snovPd5oWZgQ14zUquxbxu7Z1umuXbN5VDpUL1QobD5xUY/0/<0;1>/*,[8dfc9b34]xpub661MyMwAqRbcGFeMhhkrJL6Yj3YKQFNZQSM2BAvoMmhdjNKBh43n5v3c4YT5dFtjkirfhqQHMd22br7cHAQXAV8cZdicedZJkNweja4WWBK/0/<0;1>/*,[56c4fac3]xpub661MyMwAqRbcFNWTmtbxHaYsjddAazfBQ51wm61veSzW3z2N7s1U7M9epMGsedj3unJKhXBY2sxWpQutwrZnpFuWe2vVVvLig8nFT4nmG67/0/<0;1>/*),and_v(v:pkh([83bfab59]xpub661MyMwAqRbcGqhD7PpVgkvot7Cm4CE94VkA9q1ht6XeAe4Vd9JjnHRTYYgzqgxAY6cxVd1CMh7GdKasJAms53sRu3GvpTnWuWxTiEf4vjh/2/<0;1>/*),older(42))))))#f2wk2ejk",
+  "expected": {
+    "receive": {
+      "0": {
+        "address": "bc1qs3par7m8jq3vr4wa66rrk4rk7fv99ht98hewc2vfjfq4ptzxaypsy0vadx",
+        "scriptPubKey": "00208443d1fb679022c1d5ddd6863b5476f25852dd653df2ec2989924150ac46e903"
+      },
+      "1": {
+        "address": "bc1q97mmg35krwrmu6lj5t2gum2vn3mc43zhc7kenfyuprfsd3j4y7jslrhkxk",
+        "scriptPubKey": "00202fb7b446961b87be6bf2a2d48e6d4c9c778ac457c7ad99a49c08d306c65527a5"
+      }
+    },
+    "change": {
+      "0": {
+        "address": "bc1qh6sdypj4df8qngsuucqzhuewm4pau2sesg79hp3jpjzm49ygasvsr77dfj",
+        "scriptPubKey": "0020bea0d206556a4e09a21ce6002bf32edd43de2a19823c5b86320c85ba9488ec19"
+      },
+      "1": {
+        "address": "bc1qkjlrs7w3uddaafljjwtc7g0mwdxn7m6zc3nxlmvasm79y8te8wcqm39262",
+        "scriptPubKey": "0020b4be3879d1e35bdea7f293978f21fb734d3f6f42c4666fed9d86fc521d793bb0"
+      }
+    }
+  }
+}

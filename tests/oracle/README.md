@@ -27,7 +27,7 @@ cmp tests/fixtures/liana-v9-rust-taproot-multisig.json "$REF/rebuilt.json"
 
 The Rust generator calls Liana's `LianaPolicy::new` and `LianaDescriptor::new`, then derives through `receive_descriptor()` and `change_descriptor()`. The converter rejects missing/duplicate rows and requires both indices for both branches and all four policies. The checked-in TypeScript test compares all sixteen Rust address and `scriptPubKey` pairs exactly.
 
-The fixture `tests/fixtures/liana-v9-rust-legacy-wsh.json` and its multisig companion were generated from the pinned Rust implementation with `LianaPolicy::new_legacy`: one single-key primary/recovery policy and one 2-of-3 primary/recovery policy. Each records the descriptor plus mainnet receive/change addresses and `scriptPubKey`s for indices 0 and 1 (eight pairs total). They use only public test xpubs and fingerprints; no seed or private key is stored.
+The fixtures `tests/fixtures/liana-v9-rust-legacy-wsh.json`, its multisig companion, and `liana-v9-rust-legacy-wsh-multiple-recovery.json` were generated from the pinned Rust implementation with `LianaPolicy::new_legacy`: one single-key primary/recovery policy, one 2-of-3 primary/recovery policy, and one 2-of-3 primary with three recovery paths (single-key, 2-of-3 and 1-of-3). Each records the descriptor plus mainnet receive/change addresses and `scriptPubKey`s for indices 0 and 1 (twelve pairs total). They use only public test xpubs and fingerprints; no seed or private key is stored.
 
 To reproduce those fixtures from the pinned source clone:
 
@@ -37,6 +37,7 @@ cp tests/oracle/liana_v9_legacy_wsh.rs "$REF/liana/examples/oracle_wsh_vectors.r
 python3 tests/oracle/build_liana_v9_wsh_fixtures.py "$REF/wsh.tsv" "$REF/wsh-fixtures"
 cmp tests/fixtures/liana-v9-rust-legacy-wsh.json "$REF/wsh-fixtures/liana-v9-rust-legacy-wsh.json"
 cmp tests/fixtures/liana-v9-rust-legacy-wsh-multisig.json "$REF/wsh-fixtures/liana-v9-rust-legacy-wsh-multisig.json"
+cmp tests/fixtures/liana-v9-rust-legacy-wsh-multiple-recovery.json "$REF/wsh-fixtures/liana-v9-rust-legacy-wsh-multiple-recovery.json"
 ```
 
-The parser now handles `wsh()` descriptors with the tested Liana `or_d(primary, and_v(v:recovery, older(n)))` form and checks distinct positive recovery timelocks. This is a bounded subset: the full Liana/MiniScript grammar, multiple P2WSH recovery paths, other networks, and lossless AST retention are not yet verified. No general Liana compatibility claim is made.
+The parser handles the tested Liana P2WSH `or_d` single-recovery and nested `or_i` multi-recovery forms, where each recovery pairs a key-only path with `older(n)`; it checks distinct positive decimal timelocks. Coverage includes one three-recovery policy, not every Miniscript/Liana policy form. Accepted descriptors now include a lossless syntax AST with raw source spans; the AST is not complete Miniscript semantic validation. Other networks and broader grammar parity remain unverified. No general Liana compatibility claim is made.

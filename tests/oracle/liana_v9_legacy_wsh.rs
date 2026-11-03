@@ -10,6 +10,7 @@ fn root_keys() -> Vec<RootKey> {
         ("4ba43603", "xpub661MyMwAqRbcEtUEgdXRTY6dJQG9fRgs7C5QomqETKMYBJVtSGpRqyHSmhWy8snovPd5oWZgQ14zUquxbxu7Z1umuXbN5VDpUL1QobD5xUY"),
         ("8dfc9b34", "xpub661MyMwAqRbcGFeMhhkrJL6Yj3YKQFNZQSM2BAvoMmhdjNKBh43n5v3c4YT5dFtjkirfhqQHMd22br7cHAQXAV8cZdicedZJkNweja4WWBK"),
         ("56c4fac3", "xpub661MyMwAqRbcFNWTmtbxHaYsjddAazfBQ51wm61veSzW3z2N7s1U7M9epMGsedj3unJKhXBY2sxWpQutwrZnpFuWe2vVVvLig8nFT4nmG67"),
+        ("83bfab59", "xpub661MyMwAqRbcGqhD7PpVgkvot7Cm4CE94VkA9q1ht6XeAe4Vd9JjnHRTYYgzqgxAY6cxVd1CMh7GdKasJAms53sRu3GvpTnWuWxTiEf4vjh"),
     ];
     ROOTS.iter().map(|(fingerprint, xpub)| RootKey {
         fingerprint: Fingerprint::from_str(fingerprint).expect("valid fingerprint"),
@@ -53,4 +54,14 @@ fn main() {
         BTreeMap::from([(26352, multi(&roots, 1, 2))]),
     ).expect("valid legacy 2-of-3 policy");
     emit("legacy-2-of-3-primary-recovery", LianaDescriptor::new(multisig), &secp);
+
+    let multiple_recovery = LianaPolicy::new_legacy(
+        multi(&roots, 0, 2),
+        BTreeMap::from([
+            (42, PathInfo::Single(key(&roots, 3, 2))),
+            (43, multi(&roots, 3, 2)),
+            (1678, multi(&roots, 4, 1)),
+        ]),
+    ).expect("valid legacy policy with multiple recovery paths");
+    emit("legacy-multiple-recovery", LianaDescriptor::new(multiple_recovery), &secp);
 }

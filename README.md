@@ -2,7 +2,7 @@
 
 Watch-only TypeScript toolkit for deriving keys and addresses from imported Bitcoin descriptors, with Liana compatibility under active validation.
 
-> **Status: early implementation.** This watch-only toolkit implements BIP32/BIP39 derivation, descriptor checksums and validation, originated xpub/tpub extraction, a bounded CLI, and descriptor-based addresses/scripts. Pinned Liana Rust parity covers four Taproot policies (16 mainnet address/script pairs) and two P2WSH policy forms—single-key and 2-of-3 primary/recovery (8 pairs)—at receive/change indices 0–1. P2WSH parsing is restricted to the tested Liana recovery structure; broader policy, parser and network compatibility remain unverified. No general Liana compatibility claim is made.
+> **Status: early implementation.** This watch-only toolkit implements BIP32/BIP39 derivation, descriptor checksums and validation, originated xpub/tpub extraction, a bounded CLI, and descriptor-based addresses/scripts. Pinned Liana Rust parity covers four Taproot policies (16 mainnet address/script pairs) and three P2WSH forms—single-key primary/recovery, 2-of-3 primary/recovery, and 2-of-3 primary with three recovery paths (12 pairs total)—at receive/change indices 0–1. P2WSH parsing is restricted to the tested Liana recovery structures; broader policy, parser and network compatibility remain unverified. No general Liana compatibility claim is made.
 
 ## Requirements
 
@@ -18,7 +18,7 @@ npm run typecheck
 npm run build
 ```
 
-The API is exported from `src/index.ts`. For public-only use, import an account xpub with its master fingerprint and origin path, then derive non-hardened branch/index keys. `parseLianaDescriptor(text, network)` preserves the exact input and validates the checksum and supported descriptor shape; `deriveWalletAddress(wallet, 'receive' | 'change', index)` selects the first or second ordered multipath choice without rewriting the source descriptor. Its `branchIndexes` result lists the selected BIP32 path value for each multipath key occurrence in original descriptor order. Do not provide or store a mnemonic in applications that only need to watch an existing wallet.
+The API is exported from `src/index.ts`. For public-only use, import an account xpub with its master fingerprint and origin path, then derive non-hardened branch/index keys. `parseLianaDescriptor(text, network)` preserves the exact input, validates the checksum and supported descriptor shape, and returns a syntax AST tied to the checksum-free source body. AST nodes retain their exact `raw` slices, source offsets, ordered call arguments, prefixes and binary Taproot tree topology; this is a lossless representation of the accepted syntax, not full Miniscript semantic support. `deriveWalletAddress(wallet, 'receive' | 'change', index)` selects the first or second ordered multipath choice without rewriting the source descriptor. Its `branchIndexes` result lists the selected BIP32 path value for each multipath key occurrence in original descriptor order. Do not provide or store a mnemonic in applications that only need to watch an existing wallet.
 
 For a checked-out project, the CLI reads either a plain descriptor text file or a JSON file with a `receive.descriptor` / `change.descriptor` field. It accepts `-` as the file path to read from standard input; descriptor text is not accepted as a command-line argument, avoiding shell-history exposure.
 
