@@ -9,6 +9,7 @@ export type WalletDerivationErrorCode =
   | 'INVALID_CHECKSUM'
   | 'INVALID_DESCRIPTOR'
   | 'UNSUPPORTED_DESCRIPTOR'
+  | 'INVALID_INTERNAL_KEY'
   | 'NO_SIGNER_KEYS';
 export class WalletDerivationError extends Error {
   readonly code: WalletDerivationErrorCode;

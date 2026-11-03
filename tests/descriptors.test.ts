@@ -55,6 +55,37 @@ describe('descriptor primitives', () => {
     const result = constructUnspendableInternalXpub([wallet.signers[0]!.xpub, wallet.signers[0]!.xpub], 'signet');
     expect(Buffer.from(result.chainCode).toString('hex')).toBe(expected);
   });
+  it('imports and derives a synthetic multisig descriptor using the NUMS internal key', () => {
+    const template = parseLianaDescriptor(fixture.receive.descriptor, 'signet');
+    const [primary, recovery] = template.signers;
+    const key = (signer: typeof primary) => `[${signer.masterFingerprint}/${signer.originPath.slice(2)}]${signer.xpub}/<0;1>/*`;
+    const ordered = [primary!, recovery!, primary!];
+    const tree = `{multi_a(2,${key(ordered[0]! )},${key(ordered[1]! )}),and_v(v:pk(${key(ordered[2]!)}),older(36))}`;
+    const nums = constructUnspendableInternalXpub(ordered.map((signer) => signer.xpub), 'signet');
+    const body = `tr(${nums.descriptorKey},${tree})`;
+    const descriptor = `${body}#${descriptorChecksum(body)}`;
+    const wallet = parseLianaDescriptor(descriptor, 'signet');
+    const derived = deriveWalletAddress(wallet, 'receive', 0);
+    expect(derived.address.startsWith('tb1p')).toBe(true);
+    expect(derived.scriptPubKey).toHaveLength(34);
+  });
+  it('rejects a NUMS internal xpub inconsistent with ordered TapTree keys', () => {
+    const wallet = parseLianaDescriptor(fixture.receive.descriptor, 'signet');
+    const [primary, recovery] = wallet.signers;
+    const key = (signer: typeof primary) => `[${signer.masterFingerprint}/${signer.originPath.slice(2)}]${signer.xpub}/<0;1>/*`;
+    const treeKeys = [primary!, recovery!, primary!];
+    const tree = `{multi_a(2,${key(treeKeys[0]!)},${key(treeKeys[1]!)}),and_v(v:pk(${key(treeKeys[2]!)}),older(36))}`;
+    const correct = constructUnspendableInternalXpub(treeKeys.map((signer) => signer!.xpub), 'signet');
+    const wrong = constructUnspendableInternalXpub([recovery!.xpub, primary!.xpub, primary!.xpub], 'signet');
+    const body = `tr(${wrong.descriptorKey},${tree})`;
+    const descriptor = `${body}#${descriptorChecksum(body)}`;
+    try { parseLianaDescriptor(descriptor, 'signet'); throw new Error('expected error'); }
+    catch (error) {
+      expect(error).toBeInstanceOf(WalletDerivationError);
+      expect((error as WalletDerivationError).code).toBe('INVALID_INTERNAL_KEY');
+    }
+    expect(correct.xpub).not.toBe(wrong.xpub);
+  });
   it('reports a typed missing-checksum error', () => {
     const body = fixture.receive.descriptor.slice(0, fixture.receive.descriptor.lastIndexOf('#'));
     try { parseLianaDescriptor(body, 'signet'); throw new Error('expected error'); }
