@@ -1,9 +1,22 @@
 import { describe, expect, it } from 'vitest';
 import { descriptorChecksum, splitDescriptorChecksum, parseMultipath } from '../src/index.js';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+
+const fixture = JSON.parse(readFileSync(resolve('tests/fixtures/liana-v9-signet-single-primary-recovery.json'), 'utf8')) as {
+  receive: { descriptor: string; addressIndex0: string; scriptPubKeyIndex0: string };
+  change: { descriptor: string; addressIndex0: string };
+};
 
 describe('descriptor primitives', () => {
   it('computes the Bitcoin Core checksum vector for raw(deadbeef)', () => {
     expect(descriptorChecksum('raw(deadbeef)')).toBe('89f8spxm');
+  });
+  it('verifies receive and change checksums in the Liana Signet fixture', () => {
+    expect(splitDescriptorChecksum(fixture.receive.descriptor).checksum).toBe('22y0dhdd');
+    expect(splitDescriptorChecksum(fixture.change.descriptor).checksum).toBe('gcgkq5nc');
+    expect(fixture.receive.addressIndex0).toBe('tb1pvpqeka564yfls5ma8ps56q2xd4sn8mstm7pe6nfxezw3wc963pysnda6x9');
+    expect(fixture.change.addressIndex0).toBe('tb1prn8cy7j5q8sc2g7ahgexmjfxauwvluvp7m80gvw9rzzrdnpculpsw6h524');
   });
   it('splits a descriptor and verifies its checksum without changing its body', () => {
     expect(splitDescriptorChecksum('raw(deadbeef)#89f8spxm')).toEqual({ body: 'raw(deadbeef)', checksum: '89f8spxm' });
