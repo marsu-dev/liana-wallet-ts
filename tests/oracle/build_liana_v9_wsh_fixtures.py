@@ -4,9 +4,10 @@ import json
 import sys
 from pathlib import Path
 
-EXPECTED_IDS = ["legacy-single-primary-recovery", "legacy-2-of-3-primary-recovery", "legacy-multiple-recovery", "legacy-andor", "legacy-v2-threshold-recoveries"]
+EXPECTED_IDS = ["legacy-single-primary-recovery", "legacy-2-of-3-primary-recovery", "legacy-multiple-recovery", "legacy-andor", "legacy-v2-threshold-recoveries", "signet-v2-bip32-derivs"]
 BRANCHES = {"receive", "change"}
 INDICES = {"0", "1"}
+NETWORKS = {"signet-v2-bip32-derivs": "signet"}
 
 
 def main() -> None:
@@ -27,8 +28,9 @@ def main() -> None:
                 raise SystemExit(f"vector before descriptor for {case_id} at line {line_number}")
             if branch not in BRANCHES or index not in INDICES:
                 raise SystemExit(f"unexpected branch/index at line {line_number}")
-            if not address.startswith("bc1q") or not script.startswith("0020"):
-                raise SystemExit(f"unexpected mainnet P2WSH output at line {line_number}")
+            expected_hrp = "tb1q" if NETWORKS.get(case_id, "mainnet") == "signet" else "bc1q"
+            if not address.startswith(expected_hrp) or not script.startswith("0020"):
+                raise SystemExit(f"unexpected P2WSH output for {NETWORKS.get(case_id, 'mainnet')} at line {line_number}")
             vectors = cases[case_id]["expected"][branch]
             if index in vectors:
                 raise SystemExit(f"duplicate vector row for {case_id} {branch} {index} at line {line_number}")
@@ -49,6 +51,7 @@ def main() -> None:
         "legacy-multiple-recovery": "LianaPolicy::new_legacy with 2-of-3 primary; recovery older(42) single-key, older(43) 2-of-3, older(1678) 1-of-3; LianaDescriptor::new; receive/change derived at indices 0 and 1; address and script_pubkey from Rust",
         "legacy-andor": "LianaDescriptor::from_str over wsh(andor(pk(recovery),older(42),pk(primary))); parsed semantic policy and receive/change addresses and scripts from pinned Rust at indices 0 and 1",
         "legacy-v2-threshold-recoveries": "LianaDescriptor::from_str over a mainnet-instantiated version of the three-recovery P2WSH shape in pinned liana/src/descriptors/mod.rs::bip32_derivs_pruning; primary 3-of-3, recovery older(3) 2-of-3 and older(6) 3-of-3 with distinct multipath values; policy mapping and Rust outputs asserted",
+        "signet-v2-bip32-derivs": "the exact public Liana v2 Signet descriptor from pinned liana/src/descriptors/mod.rs::bip32_derivs_pruning, parsed by LianaDescriptor::from_str; Rust asserts the inferred primary/recovery thresholds and derives receive/change at indices 0 and 1",
     }
     filenames = {
         "legacy-single-primary-recovery": "liana-v9-rust-legacy-wsh.json",
@@ -56,6 +59,7 @@ def main() -> None:
         "legacy-multiple-recovery": "liana-v9-rust-legacy-wsh-multiple-recovery.json",
         "legacy-andor": "liana-v9-rust-legacy-wsh-andor.json",
         "legacy-v2-threshold-recoveries": "liana-v9-rust-legacy-wsh-v2-thresholds.json",
+        "signet-v2-bip32-derivs": "liana-v9-rust-signet-v2-bip32-derivs.json",
     }
     output_dir.mkdir(parents=True, exist_ok=True)
     for case_id in EXPECTED_IDS:
@@ -66,7 +70,7 @@ def main() -> None:
                 "lianaCommit": "398e622596e7530a328de3027cb2c09905f708c6",
                 "miniscriptVersion": "11.2.0",
                 "rustc": "1.80.0 (051478957 2024-07-21)",
-                "network": "mainnet",
+                "network": NETWORKS.get(case_id, "mainnet"),
                 "generator": generators[case_id],
                 "testKeys": "Descriptor includes only public test xpubs; no seed or private key is stored",
                 "secretsOmitted": True,

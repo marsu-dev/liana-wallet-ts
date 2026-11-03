@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 
 BUILDER = Path(__file__).with_name("build_liana_v9_wsh_fixtures.py")
-CASE_IDS = ["legacy-single-primary-recovery", "legacy-2-of-3-primary-recovery", "legacy-multiple-recovery", "legacy-andor", "legacy-v2-threshold-recoveries"]
+CASE_IDS = ["legacy-single-primary-recovery", "legacy-2-of-3-primary-recovery", "legacy-multiple-recovery", "legacy-andor", "legacy-v2-threshold-recoveries", "signet-v2-bip32-derivs"]
 
 
 class LegacyWshFixtureBuilderTests(unittest.TestCase):
@@ -15,7 +15,8 @@ class LegacyWshFixtureBuilderTests(unittest.TestCase):
             rows.append(f"D\t{case_id}\twsh(example)")
             for branch in ("receive", "change"):
                 for index in ("0", "1"):
-                    rows.append(f"V\t{case_id}\t{branch}\t{index}\tbc1qexample\t0020deadbeef")
+                    address = "tb1qexample" if case_id == "signet-v2-bip32-derivs" else "bc1qexample"
+                    rows.append(f"V\t{case_id}\t{branch}\t{index}\t{address}\t0020deadbeef")
         rows.append("V\tlegacy-single-primary-recovery\treceive\t0\tbc1qduplicate\t0020deadbeef")
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

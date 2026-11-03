@@ -1,0 +1,36 @@
+{
+  "id": "liana-v9-rust-signet-v2-bip32-derivs-vectors",
+  "provenance": {
+    "lianaVersion": "9.0.0",
+    "lianaCommit": "398e622596e7530a328de3027cb2c09905f708c6",
+    "miniscriptVersion": "11.2.0",
+    "rustc": "1.80.0 (051478957 2024-07-21)",
+    "network": "signet",
+    "generator": "the exact public Liana v2 Signet descriptor from pinned liana/src/descriptors/mod.rs::bip32_derivs_pruning, parsed by LianaDescriptor::from_str; Rust asserts the inferred primary/recovery thresholds and derives receive/change at indices 0 and 1",
+    "testKeys": "Descriptor includes only public test xpubs; no seed or private key is stored",
+    "secretsOmitted": true
+  },
+  "descriptor": "wsh(or_i(and_v(v:thresh(3,pkh([636adf3f/48'/1'/0'/2']tpubDEE9FvWbG4kg4gxDNrALgrWLiHwNMXNs8hk6nXNPw4VHKot16xd2251vwi2M6nsyQTkak5FJNHVHkCcuzmvpSbWHdumX3DxpDm89iTfSBaL/<4;5>/*),a:pkh([172ba1bc/48'/1'/0'/2']tpubDEgTZEAraUrKmnbyKJuXYGFPzNCm82bjMqd2GRy2HKviJ1moLtEZrHoUeG2o6uyWLEGx4yBWpctAmxcBx1b5nrrrBo5LjskRxRMDmwkuKxq/<4;5>/*),a:pkh([903115ef/48'/1'/0'/2']tpubDF2Hqd3HXUn5bDMVa2gssqmdTjQsLm9Vc8CSSJFk4YwQg8PChCZiWopAeQ6ZCEWt21n1W8ApEGxEvtB8uPnWW6EG3fwPAFnFM8US4QmgKvp/<4;5>/*)),older(6)),or_d(multi(3,[636adf3f/48'/1'/0'/2']tpubDEE9FvWbG4kg4gxDNrALgrWLiHwNMXNs8hk6nXNPw4VHKot16xd2251vwi2M6nsyQTkak5FJNHVHkCcuzmvpSbWHdumX3DxpDm89iTfSBaL/<0;1>/*,[172ba1bc/48'/1'/0'/2']tpubDEgTZEAraUrKmnbyKJuXYGFPzNCm82bjMqd2GRy2HKviJ1moLtEZrHoUeG2o6uyWLEGx4yBWpctAmxcBx1b5nrrrBo5LjskRxRMDmwkuKxq/<0;1>/*,[903115ef/48'/1'/0'/2']tpubDF2Hqd3HXUn5bDMVa2gssqmdTjQsLm9Vc8CSSJFk4YwQg8PChCZiWopAeQ6ZCEWt21n1W8ApEGxEvtB8uPnWW6EG3fwPAFnFM8US4QmgKvp/<0;1>/*),and_v(v:thresh(2,pkh([636adf3f/48'/1'/0'/2']tpubDEE9FvWbG4kg4gxDNrALgrWLiHwNMXNs8hk6nXNPw4VHKot16xd2251vwi2M6nsyQTkak5FJNHVHkCcuzmvpSbWHdumX3DxpDm89iTfSBaL/<2;3>/*),a:pkh([172ba1bc/48'/1'/0'/2']tpubDEgTZEAraUrKmnbyKJuXYGFPzNCm82bjMqd2GRy2HKviJ1moLtEZrHoUeG2o6uyWLEGx4yBWpctAmxcBx1b5nrrrBo5LjskRxRMDmwkuKxq/<2;3>/*),a:pkh([903115ef/48'/1'/0'/2']tpubDF2Hqd3HXUn5bDMVa2gssqmdTjQsLm9Vc8CSSJFk4YwQg8PChCZiWopAeQ6ZCEWt21n1W8ApEGxEvtB8uPnWW6EG3fwPAFnFM8US4QmgKvp/<2;3>/*)),older(3)))))#jxya9h7u",
+  "expected": {
+    "receive": {
+      "0": {
+        "address": "tb1q6rk5hclz8sxkwgzf9qa29rh0x89449clytfelhs99gnc0ukqq5zqwvwjl4",
+        "scriptPubKey": "0020d0ed4be3e23c0d672049283aa28eef31cb5a971f22d39fde052a2787f2c00504"
+      },
+      "1": {
+        "address": "tb1qaptt3qm6e9xwgw6zxz2yx3k3juyq2hpme8z9d803lpkz2zsyg09s6zdtnq",
+        "scriptPubKey": "0020e856b8837ac94ce43b4230944346d19708055c3bc9c4569df1f86c250a0443cb"
+      }
+    },
+    "change": {
+      "0": {
+        "address": "tb1qgclcxz2hdr2xsvku5m7sk28py7l23dxwvryhdyg97tpmhp9fcqjsr45gj4",
+        "scriptPubKey": "0020463f83095768d46832dca6fd0b28e127bea8b4ce60c9769105f2c3bb84a9c025"
+      },
+      "1": {
+        "address": "tb1qetvef2ljja4d8mefd9vsvvc0fahdzraan4j9r88hxqnm5rrmdvaqjdn3t5",
+        "scriptPubKey": "0020cad994abf2976ad3ef29695906330f4f6ed10fbd9d64519cf73027ba0c7b6b3a"
+      }
+    }
+  }
+}

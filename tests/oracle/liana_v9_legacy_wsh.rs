@@ -33,14 +33,19 @@ fn multi(roots: &[RootKey], purpose: u32, threshold: usize) -> PathInfo {
 }
 
 fn emit(case_id: &str, liana: LianaDescriptor, secp: &bitcoin::secp256k1::Secp256k1<bitcoin::secp256k1::All>) {
-    assert!(liana.all_xpubs_net_is(Network::Bitcoin));
+    emit_on_network(case_id, liana, Network::Bitcoin, secp);
+}
+
+fn emit_on_network(case_id: &str, liana: LianaDescriptor, network: Network, secp: &bitcoin::secp256k1::Secp256k1<bitcoin::secp256k1::All>) {
+    let xpub_network = if network == Network::Signet { Network::Testnet } else { network };
+    assert!(liana.all_xpubs_net_is(xpub_network));
     println!("D\t{case_id}\t{}", liana);
     for (branch, single) in [("receive", liana.receive_descriptor()), ("change", liana.change_descriptor())] {
         for index in 0u32..=1 {
             let derived = single.derive(index.into(), secp);
             let script = derived.script_pubkey();
             let script_hex: String = script.as_bytes().iter().map(|byte| format!("{byte:02x}")).collect();
-            println!("V\t{case_id}\t{branch}\t{index}\t{}\t{script_hex}", derived.address(Network::Bitcoin));
+            println!("V\t{case_id}\t{branch}\t{index}\t{}\t{script_hex}", derived.address(network));
         }
     }
 }
@@ -97,4 +102,13 @@ fn main() {
     assert!(matches!(inferred_policy.recovery_paths().get(&3), Some(PathInfo::Multi(2, keys)) if keys.len() == 3));
     assert!(matches!(inferred_policy.recovery_paths().get(&6), Some(PathInfo::Multi(3, keys)) if keys.len() == 3));
     emit("legacy-v2-threshold-recoveries", liana_v2, &secp);
+
+    let signet_v2 = LianaDescriptor::from_str(include_str!("liana-v2-signet-descriptor.txt").trim())
+        .expect("valid pinned Liana v2 Signet descriptor");
+    let inferred_policy = signet_v2.policy();
+    assert!(matches!(inferred_policy.primary_path(), PathInfo::Multi(3, keys) if keys.len() == 3));
+    assert_eq!(inferred_policy.recovery_paths().keys().copied().collect::<Vec<_>>(), vec![3, 6]);
+    assert!(matches!(inferred_policy.recovery_paths().get(&3), Some(PathInfo::Multi(2, keys)) if keys.len() == 3));
+    assert!(matches!(inferred_policy.recovery_paths().get(&6), Some(PathInfo::Multi(3, keys)) if keys.len() == 3));
+    emit_on_network("signet-v2-bip32-derivs", signet_v2, Network::Signet, &secp);
 }
