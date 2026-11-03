@@ -1,0 +1,28 @@
+# Liana v9 Rust descriptor oracle
+
+The fixture `../fixtures/liana-v9-rust-taproot-multisig.json` was generated from the pinned Liana Rust implementation, not from the TypeScript package. It contains three `LianaPolicy::new` policies: a single-key primary with one single-key recovery path, a 3-of-3 primary with one 2-of-3 recovery leaf, and a 2-of-3 primary with three recovery paths. For each, Rust produced the descriptor plus receive/change addresses and exact `scriptPubKey` bytes at indices 0 and 1.
+
+## Provenance
+
+- Liana v9.0 commit: `398e622596e7530a328de3027cb2c09905f708c6`
+- `Cargo.lock`: Miniscript `11.2.0`
+- Rust toolchain: `1.80.0`
+- Network: Bitcoin mainnet
+- Deterministic BIP32 roots use test-only seed arrays `[1; 32]` through `[5; 32]`; no seed or private key is checked in. The fixture contains only public descriptors and expected outputs.
+
+## Reproduce
+
+From the project root, set `REF` to a temporary clone location:
+
+```sh
+REF="$HOME/.cache/liana-v9-reference"
+git clone --filter=blob:none --no-checkout https://github.com/wizardsardine/liana.git "$REF"
+git -C "$REF" fetch --depth 1 origin 398e622596e7530a328de3027cb2c09905f708c6
+git -C "$REF" checkout --detach 398e622596e7530a328de3027cb2c09905f708c6
+cp tests/oracle/liana_v9_multisig.rs "$REF/liana/examples/oracle_vectors.rs"
+(cd "$REF" && cargo run --locked -p liana --example oracle_vectors) > "$REF/vectors.tsv"
+python3 tests/oracle/build_liana_v9_fixture.py "$REF/vectors.tsv" "$REF/rebuilt.json"
+cmp tests/fixtures/liana-v9-rust-taproot-multisig.json "$REF/rebuilt.json"
+```
+
+The Rust generator calls Liana's `LianaPolicy::new` and `LianaDescriptor::new`, then derives through `receive_descriptor()` and `change_descriptor()`. The converter rejects missing/duplicate rows and requires both indices for both branches and both policies. The checked-in TypeScript test compares each Rust address and `scriptPubKey` exactly.

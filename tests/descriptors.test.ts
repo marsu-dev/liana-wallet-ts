@@ -3,13 +3,26 @@ import { descriptorChecksum, splitDescriptorChecksum, parseMultipath, deriveDesc
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { createHash } from 'node:crypto';
+import { checksum as referenceDescriptorChecksum } from '@bitcoinerlab/descriptors';
 
 const fixture = JSON.parse(readFileSync(resolve('tests/fixtures/liana-v9-signet-single-primary-recovery.json'), 'utf8')) as {
   receive: { descriptor: string; addressIndex0: string; scriptPubKeyIndex0: string; addresses0to9: string[] };
   change: { descriptor: string; addressIndex0: string; addresses0to9: string[] };
 };
 
+const rustMultisigFixture = JSON.parse(readFileSync(resolve('tests/fixtures/liana-v9-rust-taproot-multisig.json'), 'utf8')) as {
+  provenance: { lianaCommit: string; miniscriptVersion: string; network: string };
+  cases: Array<{
+    id: string;
+    descriptor: string;
+    expected: Record<'receive' | 'change', Record<string, { address: string; scriptPubKey: string }>>;
+  }>;
+};
+
 describe('descriptor primitives', () => {
+  it('uses the descriptor library checksum implementation', () => {
+    expect(descriptorChecksum).toBe(referenceDescriptorChecksum);
+  });
   it('computes the Bitcoin Core checksum vector for raw(deadbeef)', () => {
     expect(descriptorChecksum('raw(deadbeef)')).toBe('89f8spxm');
   });
@@ -39,6 +52,24 @@ describe('descriptor primitives', () => {
     const wallet = parseLianaDescriptor(multipath, 'signet');
     expect(deriveWalletAddress(wallet, 'receive', 0).address).toBe(fixture.receive.addressIndex0);
     expect(deriveWalletAddress(wallet, 'change', 0).address).toBe(fixture.change.addressIndex0);
+  });
+  it('matches the pinned Liana Rust Taproot single-key and multisig address/script vectors', () => {
+    expect(rustMultisigFixture.provenance).toMatchObject({ lianaCommit: '398e622596e7530a328de3027cb2c09905f708c6', miniscriptVersion: '11.2.0', network: 'mainnet' });
+    expect(rustMultisigFixture.cases.map((item) => item.id)).toEqual(['single-primary-recovery', 'multisig-one-recovery', 'multisig-multiple-recovery']);
+    let checked = 0;
+    for (const item of rustMultisigFixture.cases) {
+      const wallet = parseLianaDescriptor(item.descriptor, 'mainnet');
+      for (const branch of ['receive', 'change'] as const) {
+        for (const index of [0, 1]) {
+          const actual = deriveWalletAddress(wallet, branch, index);
+          const expected = item.expected[branch][String(index)]!;
+          expect(actual.address, `${item.id} ${branch} ${index} address`).toBe(expected.address);
+          expect(Buffer.from(actual.scriptPubKey).toString('hex'), `${item.id} ${branch} ${index} scriptPubKey`).toBe(expected.scriptPubKey);
+          checked++;
+        }
+      }
+    }
+    expect(checked).toBe(12);
   });
   it('builds a NUMS internal xpub from ordered input extended public keys', () => {
     const wallet = parseLianaDescriptor(fixture.receive.descriptor, 'signet');

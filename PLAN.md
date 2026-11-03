@@ -2,16 +2,24 @@
 
 ## Objectif et périmètre
 
-Construire un package ESM TypeScript pour Node.js 20+ qui importe un descripteur Liana existant et dérive, en mode watch-only, les adresses Bitcoin et scriptPubKey exactement conformes à l’implémentation Rust épinglée. La spécification PDF fournie est le contrat de périmètre. La compatibilité ne sera pas revendiquée avant parité prouvée sur les politiques Taproot à clé primaire unique et multisig.
+Construire un package ESM TypeScript pour Node.js ≥20.19 qui importe un descripteur Liana existant et dérive, en mode watch-only, les adresses Bitcoin et scriptPubKey exactement conformes à l’implémentation Rust épinglée. La spécification PDF fournie est le contrat de périmètre. La compatibilité ne sera pas revendiquée avant parité prouvée sur les politiques Taproot à clé primaire unique et multisig.
 
-Hors périmètre V1 : création/signature de transactions, PSBT, et inférence d’une politique depuis un xpub seul.
+## Avancement constaté
+
+- **Phase 0 — validée :** Liana v9.0 et Miniscript 11.2.0 sont épinglés ; la fixture Signet publique clé unique et trois vecteurs générés par Rust (clé unique, multisig avec une récupération, multisig avec plusieurs récupérations) sont intégrés avec leur provenance.
+- **Phase 1 — socle validé :** package ESM strict, CI, erreurs typées et installation `npm ci` reproductible ; audit npm courant sans vulnérabilités signalées.
+- **Phase 2 — implémentée et testée :** dérivation BIP32/BIP39, import xpub avec origines, dérivation publique non durcie et vérification réseau.
+- **Phase 3 — partielle :** checksum, origines, branches multipath et texte source préservés ; validation Taproot Liana améliorée, mais parité complète du parseur et toutes les règles de politique Liana restent à établir.
+- **Phase 4 — validée pour les vecteurs couverts :** adresses et scripts concordent avec Rust pour trois politiques (clé unique, multisig à une récupération, multisig à plusieurs récupérations), receive/change indices 0 et 1 ; compatibilité générale non revendiquée.
+- **Phase 5 — implémentée :** API et CLI watch-only testées, incluant receive/change.
+- **Phase 6 — partielle :** installation propre, tests, typecheck, build, CLI et contenu du package vérifiés ; l’audit complet de compatibilité des formes de descripteurs, réseaux et erreurs reste à faire avant toute version compatible.
 
 ## Phase 0 — Références et critères de compatibilité
 
 - Épingler une version/tag ou un commit précis de Liana et identifier la version exacte de miniscript utilisée ; consigner ces références.
 - Étudier le parseur, l’analyse des descripteurs, le calcul de la clé NUMS et la dérivation effective des scripts/adresses côté Rust.
 - Récupérer et archiver sans troncature la fixture Signet Liana v9 citée par la spécification ; relever ses descripteurs, adresses receive/change et scripts attendus.
-- Préparer des fixtures séparées pour clé primaire unique, multisig primaire avec une récupération et plusieurs chemins de récupération. Les résultats de Liana/Rust sont l’oracle ; ne pas fabriquer de valeurs attendues.
+- Intégrer des fixtures séparées pour clé primaire unique, multisig primaire avec une récupération et plusieurs chemins de récupération. Les résultats Rust sont l’oracle et chaque fixture garde sa provenance ; aucune valeur attendue n’est inventée.
 - Définir les tests de parité et le blocage de version pour toute mise à jour cryptographique.
 
 **Porte de sortie :** sources épinglées et fixtures dont la provenance et les valeurs attendues sont vérifiables.
