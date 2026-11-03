@@ -1,0 +1,31 @@
+{
+  "name": "liana-wallet-ts",
+  "version": "0.1.0",
+  "description": "Watch-only TypeScript derivation for Liana Bitcoin wallets",
+  "license": "MIT",
+  "type": "module",
+  "engines": { "node": ">=20" },
+  "exports": { ".": "./dist/index.js" },
+  "types": "./dist/index.d.ts",
+  "files": ["dist", "README.md", "LICENSE"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@bitcoinerlab/descriptors": "3.2.0",
+    "bip32": "5.0.1",
+    "bip39": "3.1.2",
+    "bitcoinjs-lib": "7.0.5",
+    "tiny-secp256k1": "2.2.5"
+  },
+  "devDependencies": {
+    "@types/node": "26.6.6",
+    "tsx": "4.23.15",
+    "typescript": "7.0.2",
+    "vitest": "5.1.0"
+  }
+}
