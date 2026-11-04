@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { readFileSync } from 'node:fs';
+import { readFileSync, realpathSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import { deriveDescriptorAddress, deriveWalletAddress } from './address.js';
 import { parseLianaDescriptor } from './liana.js';
@@ -51,7 +51,7 @@ function run(argv: string[]): void {
   });
   process.stdout.write(`${JSON.stringify({ network, addresses }, null, 2)}\n`);
 }
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+if (process.argv[1] && import.meta.url === pathToFileURL(realpathSync(process.argv[1])).href) {
   try { run(process.argv.slice(2)); }
   catch (error) {
     const code: WalletDerivationErrorCode | 'INVALID_ARGUMENT' = error instanceof WalletDerivationError ? error.code : 'INVALID_ARGUMENT';

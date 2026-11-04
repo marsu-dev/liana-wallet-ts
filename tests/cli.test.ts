@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { execFileSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { mkdtempSync, readFileSync, rmSync, symlinkSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
 
 const fixturePath = resolve('tests/fixtures/liana-v9-signet-single-primary-recovery.json');
 const fixture = JSON.parse(readFileSync(fixturePath, 'utf8')) as {
@@ -29,5 +30,17 @@ describe('CLI', () => {
     const parsed = JSON.parse(output) as { addresses: Array<{ address: string; scriptPubKey: string; index: number; branch: string }> };
     expect(parsed.addresses).toEqual([{ address: 'tb1pvpqeka564yfls5ma8ps56q2xd4sn8mstm7pe6nfxezw3wc963pysnda6x9', scriptPubKey: '512060419b769aa913f8537d38614d01466d6133ee0bdf839d4d26c89d1760ba8849', index: 0, branch: 'receive' }]);
     expect(output).not.toContain('tpubDDvFW');
+  });
+  it('runs when invoked through a package-style symlink', () => {
+    const directory = mkdtempSync(join(tmpdir(), 'liana-cli-'));
+    const symlink = join(directory, 'liana-wallet-ts.ts');
+    symlinkSync(resolve('src/cli.ts'), symlink);
+    try {
+      const output = execFileSync(resolve('node_modules/.bin/tsx'), [symlink, '--network', 'signet', '--descriptor-file', fixturePath, '--branch', 'receive', '--start', '0', '--count', '1'], { encoding: 'utf8' });
+      const parsed = JSON.parse(output) as { addresses: Array<{ address: string; branch: string }> };
+      expect(parsed.addresses[0]).toMatchObject({ address: fixture.receive.addresses0to9[0], branch: 'receive' });
+    } finally {
+      rmSync(directory, { recursive: true, force: true });
+    }
   });
 });
