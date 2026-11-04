@@ -48,6 +48,15 @@ const rustTaprootDuplicateOriginFixture = JSON.parse(readFileSync(resolve('tests
   expectedRejection: string;
   descriptor: string;
 };
+const rustTaprootDuplicateOriginRecoveryFixture = JSON.parse(readFileSync(resolve('tests/fixtures/liana-v9-rust-taproot-duplicate-origin-recovery-same-path.json'), 'utf8')) as {
+  id: string;
+  provenance: { lianaCommit: string; miniscriptVersion: string; rustc: string; network: string; secretsOmitted: boolean };
+  sourceFixture: string;
+  sourceCase: string;
+  transformation: string;
+  expectedRejection: string;
+  descriptor: string;
+};
 const rustPolicyRejectionFixture = JSON.parse(readFileSync(resolve('tests/fixtures/liana-v9-rust-policy-rejections.json'), 'utf8')) as {
   provenance: { lianaCommit: string; miniscriptVersion: string; rustc: string; oracle: string };
   cases: Array<{ id: string; descriptor: string; expected: { accepted: boolean; error: string } }>;
@@ -326,6 +335,48 @@ describe('descriptor primitives', () => {
 
     expect(() => parseLianaDescriptor(rustTaprootDuplicateOriginFixture.descriptor, 'mainnet')).toThrowError(
       expect.objectContaining({ code: 'INVALID_DESCRIPTOR', message: expect.stringContaining('duplicate master-fingerprint origins') }),
+    );
+  });
+  it('matches the pinned DuplicateOriginSamePath rejection when recovery key origins repeat', () => {
+    expect(rustTaprootDuplicateOriginRecoveryFixture.id).toBe('liana-v9-rust-taproot-duplicate-origin-recovery-same-path');
+    expect(rustTaprootDuplicateOriginRecoveryFixture.provenance).toMatchObject({
+      lianaCommit: '398e622596e7530a328de3027cb2c09905f708c6',
+      miniscriptVersion: '11.2.0',
+      rustc: '1.80.0 (051478957 2024-07-21)',
+      network: 'mainnet',
+      secretsOmitted: true,
+    });
+    expect(rustTaprootDuplicateOriginRecoveryFixture.sourceFixture).toBe('liana-v9-rust-taproot-multisig-vectors');
+    expect(rustTaprootDuplicateOriginRecoveryFixture.sourceCase).toBe('multisig-one-recovery');
+    expect(rustTaprootDuplicateOriginRecoveryFixture.expectedRejection).toBe('DuplicateOriginSamePath');
+    expect(rustTaprootDuplicateOriginRecoveryFixture.transformation).toContain('only the recovery multi_a(2,...) second key origin fingerprint');
+
+    const source = rustMultisigFixture.cases.find((item) => item.id === rustTaprootDuplicateOriginRecoveryFixture.sourceCase);
+    if (!source) throw new Error('expected pinned Rust source multisig case');
+    const sourceBody = splitDescriptorChecksum(source.descriptor).body;
+    const recoveryStart = sourceBody.indexOf('and_v(v:multi_a(2,');
+    const policyStart = sourceBody.indexOf('multi_a(2,', recoveryStart);
+    const policyEnd = sourceBody.indexOf(')', policyStart) + 1;
+    expect(recoveryStart).toBeGreaterThan(0);
+    expect(policyStart).toBeGreaterThan(recoveryStart);
+    expect(policyEnd).toBeGreaterThan(policyStart);
+    const sourcePolicy = sourceBody.slice(policyStart, policyEnd);
+    const keys = sourcePolicy.slice('multi_a(2,'.length, -1).split(',');
+    expect(keys).toHaveLength(3);
+    expect(keys[0]).toMatch(/^\[4ba43603\]/);
+    expect(keys[1]).toMatch(/^\[8dfc9b34\]/);
+    expect(keys[0]!.slice('[4ba43603]'.length)).not.toBe(keys[1]!.slice('[8dfc9b34]'.length));
+    const changedKey = keys[1]!.replace(/^\[8dfc9b34\]/, '[4ba43603]');
+    expect(changedKey.slice('[4ba43603]'.length)).toBe(keys[1]!.slice('[8dfc9b34]'.length));
+    const candidatePolicy = `multi_a(2,${keys[0]},${changedKey},${keys[2]})`;
+    const candidateBody = sourceBody.replace(sourcePolicy, candidatePolicy);
+    expect(candidateBody.replace(candidatePolicy, sourcePolicy)).toBe(sourceBody);
+    expect(candidateBody.slice(0, recoveryStart)).toBe(sourceBody.slice(0, recoveryStart));
+    expect(candidateBody).toContain('multi_a(3,');
+    expect(rustTaprootDuplicateOriginRecoveryFixture.descriptor).toBe(descriptorWithBody(candidateBody));
+
+    expect(() => parseLianaDescriptor(rustTaprootDuplicateOriginRecoveryFixture.descriptor, 'mainnet')).toThrowError(
+      expect.objectContaining({ code: 'INVALID_DESCRIPTOR', message: expect.stringContaining('recovery path contains duplicate master-fingerprint origins') }),
     );
   });
   it('rejects Taproot recovery paths with a hashlock despite a valid older() condition', () => {

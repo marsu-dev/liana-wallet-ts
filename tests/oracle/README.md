@@ -158,6 +158,16 @@ python3 tests/oracle/build_liana_v9_duplicate_origin_same_path_fixture.py tests/
 cmp tests/fixtures/liana-v9-rust-taproot-duplicate-origin-same-path.json "$REF/duplicate-origin-same-path.json"
 ```
 
+`tests/fixtures/liana-v9-rust-taproot-duplicate-origin-recovery-same-path.json` tests the recovery path separately. From the same parser-derived case it changes only the second recovery key's origin fingerprint to match a distinct recovery xpub; the pinned parser rejects the valid descriptor with `DuplicateOriginSamePath`, so this vector verifies the recovery-specific duplicate-origin guard and contains no address/script pairs.
+
+```sh
+python3 tests/oracle/build_liana_v9_duplicate_origin_recovery_input.py tests/fixtures/liana-v9-rust-taproot-multisig.json "$REF/duplicate-origin-recovery-same-path.txt"
+cp tests/oracle/liana_v9_duplicate_origin_recovery.rs "$REF/liana/examples/liana_v9_duplicate_origin_recovery.rs"
+(cd "$REF" && cargo run --locked -p liana --example liana_v9_duplicate_origin_recovery -- "$REF/duplicate-origin-recovery-same-path.txt") > "$REF/duplicate-origin-recovery-same-path.tsv"
+python3 tests/oracle/build_liana_v9_duplicate_origin_recovery_fixture.py tests/fixtures/liana-v9-rust-taproot-multisig.json "$REF/duplicate-origin-recovery-same-path.txt" "$REF/duplicate-origin-recovery-same-path.tsv" "$REF/duplicate-origin-recovery-same-path.json"
+cmp tests/fixtures/liana-v9-rust-taproot-duplicate-origin-recovery-same-path.json "$REF/duplicate-origin-recovery-same-path.json"
+```
+
 These negative cases tighten the tested Taproot subset only; they do not make the TypeScript importer a complete Miniscript semantic analyzer.
 
 ## BIP32 CKDpub vector cross-check

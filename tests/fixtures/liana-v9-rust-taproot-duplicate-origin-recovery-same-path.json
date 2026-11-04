@@ -1,0 +1,18 @@
+{
+  "id": "liana-v9-rust-taproot-duplicate-origin-recovery-same-path",
+  "provenance": {
+    "lianaVersion": "9.0.0",
+    "lianaCommit": "398e622596e7530a328de3027cb2c09905f708c6",
+    "miniscriptVersion": "11.2.0",
+    "rustc": "1.80.0 (051478957 2024-07-21)",
+    "cargoLock": "Liana repository Cargo.lock at the pinned commit",
+    "network": "mainnet",
+    "generator": "Pinned LianaDescriptor::from_str on the valid-checksum descriptor; exact Liana policy rejection emitted by the Rust harness",
+    "secretsOmitted": true
+  },
+  "sourceFixture": "liana-v9-rust-taproot-multisig-vectors",
+  "sourceCase": "multisig-one-recovery",
+  "transformation": "Change only the recovery multi_a(2,...) second key origin fingerprint from 8dfc9b34 to 4ba43603; its xpub and derivation suffix, the primary policy, recovery timelock, and NUMS internal key remain unchanged.",
+  "expectedRejection": "DuplicateOriginSamePath",
+  "descriptor": "tr(xpub661MyMwAqRbcFMoXoWQVKkmYBC17AWLZ6PSj39yYQeKhvzbwQENxdS9xkPqaNba1G6QVcG5DqbDuRw2wNqEPb3hndJVwn6k8VNq4FrDh913/<0;1>/*,{and_v(v:multi_a(2,[4ba43603]xpub661MyMwAqRbcEtUEgdXRTY6dJQG9fRgs7C5QomqETKMYBJVtSGpRqyHSmhWy8snovPd5oWZgQ14zUquxbxu7Z1umuXbN5VDpUL1QobD5xUY/1/<0;1>/*,[4ba43603]xpub661MyMwAqRbcGFeMhhkrJL6Yj3YKQFNZQSM2BAvoMmhdjNKBh43n5v3c4YT5dFtjkirfhqQHMd22br7cHAQXAV8cZdicedZJkNweja4WWBK/1/<0;1>/*,[56c4fac3]xpub661MyMwAqRbcFNWTmtbxHaYsjddAazfBQ51wm61veSzW3z2N7s1U7M9epMGsedj3unJKhXBY2sxWpQutwrZnpFuWe2vVVvLig8nFT4nmG67/1/<0;1>/*),older(26352)),multi_a(3,[4ba43603]xpub661MyMwAqRbcEtUEgdXRTY6dJQG9fRgs7C5QomqETKMYBJVtSGpRqyHSmhWy8snovPd5oWZgQ14zUquxbxu7Z1umuXbN5VDpUL1QobD5xUY/0/<0;1>/*,[8dfc9b34]xpub661MyMwAqRbcGFeMhhkrJL6Yj3YKQFNZQSM2BAvoMmhdjNKBh43n5v3c4YT5dFtjkirfhqQHMd22br7cHAQXAV8cZdicedZJkNweja4WWBK/0/<0;1>/*,[56c4fac3]xpub661MyMwAqRbcFNWTmtbxHaYsjddAazfBQ51wm61veSzW3z2N7s1U7M9epMGsedj3unJKhXBY2sxWpQutwrZnpFuWe2vVVvLig8nFT4nmG67/0/<0;1>/*)})#rqquupaq"
+}
