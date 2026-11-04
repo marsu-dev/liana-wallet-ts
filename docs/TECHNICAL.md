@@ -4,8 +4,10 @@ This document describes the package API, descriptor-processing flow, CLI contrac
 
 ## Runtime and package
 
-- Node.js: `>=20.19.0`.
+- Node.js: `>=20.19.0` for building the package and running the CLI.
 - Package: `liana-wallet-ts`, ESM (`type: module`), TypeScript declarations shipped from `dist/index.d.ts`.
+- Browser: the root export selects `dist/browser/index.js` through the `browser` export condition/field. It is a self-contained ESM bundle targeting ES2022; the watch-only API path has no Node core imports, global `Buffer` requirement, or WASM asset. BIP39 uses `@scure/bip39` and imports only the English wordlist by default. The CLI remains Node-only.
+- `npm run build` emits both Node ESM/CLI files and the browser bundle.
 - Network values: `mainnet`, `testnet`, `signet`, `regtest`.
 - The package is not yet published to the npm registry. Build the checkout before installing it by local path.
 
@@ -33,7 +35,7 @@ All exports below are available from the package root unless identified as a typ
 
 `WalletDescriptor.ast` is a syntax tree. Nodes preserve raw source slices, offsets, argument and prefix ordering, and binary Taproot tree shape. This AST is not a complete Miniscript semantic model and is not evidence that unsupported descriptor forms are accepted.
 
-`DerivedWalletAddress` contains the Bech32/Bech32m address, `scriptPubKey` as `Uint8Array`, network, index, branch and selected multipath values. Convert scripts to display hex with `Buffer.from(scriptPubKey).toString('hex')` in Node.js.
+`DerivedWalletAddress` contains the Bech32/Bech32m address, `scriptPubKey` as `Uint8Array`, network, index, branch and selected multipath values. Convert scripts to display hex in either runtime with `Array.from(scriptPubKey, byte => byte.toString(16).padStart(2, '0')).join('')`.
 
 ### Errors
 

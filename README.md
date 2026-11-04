@@ -12,6 +12,7 @@ A watch-only TypeScript library for importing supported Liana Bitcoin descriptor
 - Use BIP32 account-key and public-child derivation helpers; optionally convert a BIP39 mnemonic to a seed.
 - Inspect a lossless syntax AST attached to an imported descriptor.
 - Batch address derivation through the CLI, including reading descriptors from standard input.
+- Import the public API from modern browser applications through a prebuilt ES2022 browser export; no Node runtime is required in the browser.
 
 ## Use cases
 
@@ -33,7 +34,7 @@ npm run build
 npm install /absolute/path/to/liana-wallet-ts
 ```
 
-Requires Node.js 20.19 or newer.
+Requires Node.js 20.19 or newer to build the package or run its CLI. Browser applications use the package's browser ESM export and do not need Node.js at runtime; use a bundler that honors the `browser` export condition/field. `npm run build` creates `dist/browser/index.js`.
 
 ## Usage
 
@@ -56,6 +57,24 @@ for (const branch of ['receive', 'change'] as const) {
 ```
 
 `deriveWalletAddress` returns the address, script, requested branch and index, plus the selected multipath value for each key occurrence. If you have separate receive/change descriptors rather than one multipath descriptor, use `deriveDescriptorAddress(descriptor, index, network)` for each descriptor.
+
+### Use from a browser application
+
+The package root selects its prebuilt browser export when resolved by a bundler. No Node `crypto`, `Buffer` global, or WebAssembly loader/polyfill is required on this path:
+
+```ts
+import { deriveWalletAddress, parseLianaDescriptor } from 'liana-wallet-ts'
+
+const wallet = parseLianaDescriptor(descriptorFromUser, 'mainnet')
+const output = deriveWalletAddress(wallet, 'receive', 0)
+const scriptPubKeyHex = Array.from(output.scriptPubKey, byte =>
+  byte.toString(16).padStart(2, '0'),
+).join('')
+
+renderAddress(output.address, scriptPubKeyHex)
+```
+
+The browser export targets ES2022 and uses BigInt-capable browsers. The current minified entry is about 754 kB uncompressed (205 kB gzip); its size can change with dependency updates. It is smoke-tested against a pinned Liana address/script vector in Chromium; see [Compatibility](docs/COMPATIBILITY.md). The CLI remains Node-only.
 
 ### Derive a range
 

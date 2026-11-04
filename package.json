@@ -4,13 +4,32 @@
   "description": "Watch-only TypeScript derivation for Liana Bitcoin wallets",
   "license": "MIT",
   "type": "module",
-  "engines": { "node": ">=20.19.0" },
-  "exports": { ".": "./dist/index.js" },
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "browser": "./dist/browser/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "browser": "./dist/browser/index.js",
   "types": "./dist/index.d.ts",
-  "bin": { "liana-wallet-ts": "./dist/cli.js" },
-  "files": ["dist", "README.md", "LICENSE", "SECURITY.md", "docs/COMPATIBILITY.md", "docs/TECHNICAL.md"],
+  "bin": {
+    "liana-wallet-ts": "./dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "SECURITY.md",
+    "docs/COMPATIBILITY.md",
+    "docs/TECHNICAL.md"
+  ],
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.json && npm run build:browser",
+    "build:browser": "esbuild src/index.ts --bundle --platform=browser --format=esm --target=es2022 --minify --outfile=dist/browser/index.js",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
@@ -18,13 +37,15 @@
   },
   "dependencies": {
     "@bitcoinerlab/descriptors": "3.2.0",
+    "@bitcoinerlab/secp256k1": "2.0.0",
+    "@noble/hashes": "2.4.0",
+    "@scure/bip39": "2.4.0",
     "bip32": "5.0.1",
-    "bip39": "3.1.2",
-    "bitcoinjs-lib": "7.0.5",
-    "tiny-secp256k1": "2.2.5"
+    "bitcoinjs-lib": "7.0.5"
   },
   "devDependencies": {
     "@types/node": "26.6.6",
+    "esbuild": "0.28.2",
     "tsx": "4.23.15",
     "typescript": "7.0.2",
     "vitest": "5.1.0"

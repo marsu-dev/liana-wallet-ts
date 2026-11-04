@@ -1,4 +1,5 @@
-import * as bip39 from 'bip39';
+import { mnemonicToSeedSync, validateMnemonic } from '@scure/bip39';
+import { wordlist as englishWordlist } from '@scure/bip39/wordlists/english.js';
 import { bip32 } from './bip32-engine.js';
 import { WalletDerivationError } from './errors.js';
 export type Network = 'mainnet' | 'testnet' | 'signet' | 'regtest';
@@ -26,8 +27,9 @@ function parsePath(path: string): string[] {
 }
 export function mnemonicToSeed(mnemonic: string, passphrase = '', wordlist?: string[]): Uint8Array {
   const normalized = mnemonic.normalize('NFKD');
-  if (!bip39.validateMnemonic(normalized, wordlist)) throw new WalletDerivationError('INVALID_SEED', 'Invalid BIP39 mnemonic');
-  return bip39.mnemonicToSeedSync(normalized, passphrase.normalize('NFKD'));
+  const effectiveWordlist = wordlist ?? englishWordlist;
+  if (!validateMnemonic(normalized, effectiveWordlist)) throw new WalletDerivationError('INVALID_SEED', 'Invalid BIP39 mnemonic');
+  return mnemonicToSeedSync(normalized, passphrase.normalize('NFKD'));
 }
 export function deriveAccountXpub(seed: Uint8Array, path: string, network: Network): AccountKey {
   assertNetwork(network);
@@ -40,7 +42,7 @@ export function deriveAccountXpub(seed: Uint8Array, path: string, network: Netwo
     return hardened ? parent.deriveHardened(index) : parent.derive(index);
   }, master);
   const xpub = node.neutered().toBase58();
-  return { network, xpub, masterFingerprint: Buffer.from(master.fingerprint).toString('hex'), originPath: parts.length ? `m/${parts.join('/')}` : 'm' };
+  return { network, xpub, masterFingerprint: Array.from(master.fingerprint, (byte) => byte.toString(16).padStart(2, '0')).join(''), originPath: parts.length ? `m/${parts.join('/')}` : 'm' };
 }
 export function importAccountXpub(xpub: string, origin: string, network: Network): AccountKey {
   assertNetwork(network);

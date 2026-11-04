@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { wordlists } from 'bip39';
+import { wordlist as japaneseWordlist } from '@scure/bip39/wordlists/japanese.js';
 import { deriveAccountXpub, importAccountXpub, deriveChildKey, mnemonicToSeed, WalletDerivationError } from '../src/index.js';
 
 describe('BIP32 wallet derivation', () => {
@@ -30,7 +30,7 @@ describe('BIP32 wallet derivation', () => {
   it('derives the published BIP39 Japanese NFKD vector with its wordlist', () => {
     const mnemonic = 'あいこくしん　あいこくしん　あいこくしん　あいこくしん　あいこくしん　あいこくしん　あいこくしん　あいこくしん　あいこくしん　あいこくしん　あいこくしん　あおぞら';
     const passphrase = '㍍ガバヴァぱばぐゞちぢ十人十色';
-    const seed = mnemonicToSeed(mnemonic, passphrase, wordlists.japanese);
+    const seed = mnemonicToSeed(mnemonic, passphrase, japaneseWordlist);
     expect(Buffer.from(seed).toString('hex')).toBe('a262d6fb6122ecf45be09c50492b31f92e9beb7d9a845987a02cefda57a15f9c467a17872029a9e92299b5cbdf306e3a0ee620245cbd508959b6cb7ca637bd55');
   });
   it('serializes a Signet account key with tpub and imports it watch-only', () => {
