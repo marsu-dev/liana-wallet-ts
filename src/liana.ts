@@ -3,6 +3,7 @@ import { networks, type Network as BitcoinNetwork } from 'bitcoinjs-lib';
 import { importAccountXpub, assertNetwork, type Network, type AccountKey } from './bip32.js';
 import { WalletDerivationError } from './errors.js';
 import { constructUnspendableInternalXpub } from './taproot.js';
+import { validateLianaPolicySemantics } from './liana-policy.js';
 import { splitDescriptorChecksum, selectMultipathBranch, parseDescriptorAst, type DescriptorAst } from './descriptors.js';
 export interface WalletDescriptor { network: Network; original: string; checksum: string; signers: AccountKey[]; ast: DescriptorAst; }
 const KEY_WITH_ORIGIN = /\[([0-9a-fA-F]{8}(?:\/(?:0|[1-9]\d*)['hH]?)*?)\]((?:xpub|tpub)[1-9A-HJ-NP-Za-km-z]+)/g;
@@ -33,14 +34,7 @@ function splitTopLevelComma(value: string): string[] {
   parts.push(value.slice(start));
   return parts;
 }
-function tapTreeLeaves(tree: string): string[] {
-  const value = tree.trim();
-  if (!value.startsWith('{')) return [value];
-  if (!value.endsWith('}')) throw new WalletDerivationError('INVALID_DESCRIPTOR', 'Malformed Taproot tree braces');
-  const children = splitTopLevelComma(value.slice(1, -1));
-  if (children.length !== 2 || children.some((child) => child.trim().length === 0)) throw new WalletDerivationError('INVALID_DESCRIPTOR', 'Taproot tree nodes must contain exactly two branches');
-  return children.flatMap(tapTreeLeaves);
-}
+
 function originFingerprints(value: string): string[] {
   return [...value.matchAll(KEY_WITH_ORIGIN)].map((match) => match[1]!.split('/')[0]!.toLowerCase());
 }
@@ -49,48 +43,7 @@ function rejectDuplicateOrigins(fingerprints: string[], path: string): void {
     throw new WalletDerivationError('INVALID_DESCRIPTOR', `Liana ${path} path contains duplicate master-fingerprint origins`);
   }
 }
-function validateLianaTaprootPolicy(body: string): void {
-  const tr = /^tr\(([^,]+)(?:,([\s\S]*))?\)$/.exec(body);
-  if (!tr) throw new WalletDerivationError('INVALID_DESCRIPTOR', 'Only Liana Taproot tr() descriptors are supported');
-  if (!tr[2]) throw new WalletDerivationError('INVALID_DESCRIPTOR', 'Liana Taproot descriptors require a recovery TapTree');
-  const leaves = tapTreeLeaves(tr[2]);
-  const hasMultipath = body.includes('<');
-  const recoveryLeaves = leaves.filter((leaf) => /\bolder\s*\(/.test(leaf));
-  if (recoveryLeaves.length === 0) throw new WalletDerivationError('INVALID_DESCRIPTOR', 'Liana Taproot descriptors require at least one relative-timelocked recovery path');
-  const recoveryTimelocks = new Set<number>();
-  for (const leaf of recoveryLeaves) {
-    const timelocks = [...leaf.matchAll(/\bolder\s*\(\s*(\d+)\s*\)/g)];
-    const timelock = Number(timelocks[0]?.[1]);
-    if (timelocks.length !== 1 || timelock < 1 || timelock > 0xffff) {
-      throw new WalletDerivationError('INVALID_DESCRIPTOR', 'Each Liana recovery path must contain exactly one block-based older() timelock in the uint16 range');
-    }
-    const recovery = descriptorCall(leaf);
-    const keyExpression = recovery?.name === 'and_v' && recovery.args.length === 2 && recovery.args[0]!.startsWith('v:')
-      ? recovery.args[0]!.slice(2)
-      : '';
-    const older = recovery?.name === 'and_v' && recovery.args.length === 2 ? descriptorCall(recovery.args[1]!) : undefined;
-    if (!isLianaTaprootKeyPolicy(keyExpression, hasMultipath, true) || older?.name !== 'older' || older.args.length !== 1 || !isDecimalToken(older.args[0]!)) {
-      throw new WalletDerivationError('INVALID_DESCRIPTOR', 'Liana Taproot recovery paths must combine a key-only signer policy with exactly one older() timelock');
-    }
-    if (recoveryTimelocks.has(timelock)) throw new WalletDerivationError('INVALID_DESCRIPTOR', 'Liana recovery paths must have distinct relative timelocks');
-    recoveryTimelocks.add(timelock);
-    if (!/(?:xpub|tpub)[1-9A-HJ-NP-Za-km-z]+/.test(leaf)) throw new WalletDerivationError('INVALID_DESCRIPTOR', 'Each Liana recovery path must contain at least one signer key');
-    rejectDuplicateOrigins(originFingerprints(leaf), 'recovery');
-  }
-  const numsInternal = /^(?:xpub|tpub)[1-9A-HJ-NP-Za-km-z]+\/<0;1>\/\*$/.test(tr[1]!);
-  if (hasMultipath && !numsInternal && !isDescriptorXpub(tr[1]!)) {
-    throw new WalletDerivationError('INVALID_DESCRIPTOR', 'A spendable Liana Taproot internal key must be an originated multipath xpub with two normal derivation choices and an unhardened wildcard');
-  }
-  const primaryLeaves = leaves.filter((leaf) => !/\bolder\s*\(/.test(leaf));
-  if (primaryLeaves.some((leaf) => !isLianaTaprootKeyPolicy(leaf, hasMultipath, true))) {
-    throw new WalletDerivationError('INVALID_DESCRIPTOR', 'Liana Taproot primary leaves must be key-only policies');
-  }
-  if (numsInternal && primaryLeaves.length === 0) {
-    throw new WalletDerivationError('INVALID_DESCRIPTOR', 'A NUMS internal key requires a separate always-available primary path in the TapTree');
-  }
-  const primaryOrigins = [...(!numsInternal ? originFingerprints(tr[1]!) : []), ...primaryLeaves.flatMap(originFingerprints)];
-  rejectDuplicateOrigins(primaryOrigins, 'primary');
-}
+
 function descriptorCall(expression: string): { name: string; args: string[] } | undefined {
   const open = expression.indexOf('(');
   if (open <= 0 || !expression.endsWith(')')) return undefined;
@@ -104,6 +57,7 @@ function isNormalChildIndex(value: string): boolean {
   const index = Number(value);
   return Number.isSafeInteger(index) && index < 0x80000000;
 }
+
 function isDescriptorXpub(value: string): boolean {
   const text = value.trim();
   const match = new RegExp(`^${KEY_WITH_ORIGIN.source}`).exec(text);
@@ -123,18 +77,7 @@ function isDescriptorXpub(value: string): boolean {
     return isNormalChildIndex(segment);
   });
 }
-function isLianaTaprootDescriptorKey(value: string): boolean {
-  if (isDescriptorXpub(value)) return true;
-  const text = value.trim();
-  const match = new RegExp(`^${KEY_WITH_ORIGIN.source}`).exec(text);
-  if (!match) return false;
-  const suffix = text.slice(match[0].length);
-  if (!suffix.endsWith('/*')) return false;
-  const derivation = suffix.slice(0, -2);
-  if (!derivation.startsWith('/')) return false;
-  const segments = derivation.slice(1).split('/');
-  return segments.length > 0 && segments.every(isNormalChildIndex);
-}
+
 function isLianaKeyLeaf(expression: string): boolean {
   const value = expression.startsWith('a:') ? expression.slice(2) : expression;
   const call = descriptorCall(value);
@@ -155,25 +98,7 @@ function isLianaKeyPolicy(expression: string): boolean {
   }
   return false;
 }
-function isLianaTaprootKeyPolicy(expression: string, requireMultipath: boolean, allowKeyThreshold = false): boolean {
-  const isSignerKey = requireMultipath ? isDescriptorXpub : isLianaTaprootDescriptorKey;
-  const call = descriptorCall(expression);
-  if (call?.name === 'pk') return call.args.length === 1 && isSignerKey(call.args[0]!);
-  if (call?.name === 'multi_a') {
-    const threshold = call.args[0]!;
-    return call.args.length >= 2 && isDecimalToken(threshold) && Number(threshold) >= 1 && Number(threshold) <= call.args.length - 1 && call.args.slice(1).every(isSignerKey);
-  }
-  if (allowKeyThreshold && call?.name === 'thresh') {
-    const threshold = call.args[0]!;
-    const keys = call.args.slice(1).map((argument, index) => {
-      const keyExpression = index === 0 ? argument : argument.startsWith('s:') ? argument.slice(2) : '';
-      const keyCall = descriptorCall(keyExpression);
-      return keyCall?.name === 'pk' && keyCall.args.length === 1 && isSignerKey(keyCall.args[0]!);
-    });
-    return keys.length >= 2 && isDecimalToken(threshold) && Number(threshold) >= 1 && Number(threshold) <= keys.length && keys.every(Boolean);
-  }
-  return false;
-}
+
 function validateLianaWshPolicy(body: string): void {
   const root = descriptorCall(body);
   if (root?.name !== 'wsh' || root.args.length !== 1) throw new WalletDerivationError('INVALID_DESCRIPTOR', 'Malformed Liana P2WSH descriptor');
@@ -221,8 +146,8 @@ function validateLianaWshPolicy(body: string): void {
   if (timelocks.size === 0) throw new WalletDerivationError('INVALID_DESCRIPTOR', 'Liana P2WSH descriptors require at least one recovery path');
   rejectDuplicateOrigins(originFingerprints(primary), 'primary');
 }
-function validateLianaDescriptorPolicy(body: string): void {
-  if (body.startsWith('tr(')) validateLianaTaprootPolicy(body);
+function validateLianaDescriptorPolicy(body: string, unoriginatedInternalKeyOffset?: number): void {
+  if (body.startsWith('tr(')) validateLianaPolicySemantics(body, unoriginatedInternalKeyOffset);
   else if (body.startsWith('wsh(')) validateLianaWshPolicy(body);
   else throw new WalletDerivationError('INVALID_DESCRIPTOR', 'Only Liana Taproot and P2WSH descriptors are supported');
 }
@@ -287,7 +212,7 @@ export function parseLianaDescriptor(text: string, network: Network): WalletDesc
   const unoriginatedInternalKeyOffset = validateNumsInternalKey(body, network);
   validateKeyOrigins(body, unoriginatedInternalKeyOffset);
   validateUniqueDescriptorKeys(body, unoriginatedInternalKeyOffset);
-  validateLianaDescriptorPolicy(body);
+  validateLianaDescriptorPolicy(body, unoriginatedInternalKeyOffset);
   try {
     const hasMultipath = body.includes('<');
     const selections = hasMultipath ? [0, 1] as const : [0] as const;

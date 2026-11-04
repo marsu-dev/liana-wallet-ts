@@ -47,6 +47,24 @@ python3 tests/oracle/build_liana_v9_taproot_thresh_recovery_fixture.py tests/fix
 cmp tests/fixtures/liana-v9-rust-taproot-thresh-recovery.json "$REF/taproot-thresh-recovery.json"
 ```
 
+The parser-derived `liana-v9-rust-taproot-primary-path-shapes.json` fixture pins four ordered primary-leaf candidates. Rust accepts `multi_a(3,...)` followed by a separate single-key leaf (`PathInfo::Multi(3,4)`) and two single-key leaves (`PathInfo::Multi(1,2)`); Rust rejects single-key then multisig and two multisig leaves with `IncompatibleDesc`. This is a path-classification fixture only: it emits no addresses/scripts and does not change the 184 address/script-pair total.
+
+```sh
+npx tsx tests/oracle/build_liana_v9_taproot_primary_path_shapes.ts tests/fixtures/liana-v9-rust-taproot-multisig.json "$REF/taproot-primary-shapes-candidates.json"
+cp tests/oracle/liana_v9_taproot_primary_path_shapes.rs "$REF/liana/examples/liana_v9_taproot_primary_path_shapes.rs"
+python3 - "$REF/taproot-primary-shapes-candidates.json" "$REF" <<'PY'
+import json, pathlib, sys
+source, ref = pathlib.Path(sys.argv[1]), pathlib.Path(sys.argv[2])
+for case in json.loads(source.read_text())["cases"]:
+    (ref / (case["id"] + ".txt")).write_text(case["descriptor"] + "\n")
+PY
+for id in primary-multisig-then-single-key primary-single-key-then-multisig two-primary-multisig-leaves two-primary-single-key-leaves; do
+  (cd "$REF" && cargo +1.80.0 run --quiet --locked -p liana --example liana_v9_taproot_primary_path_shapes -- "$id" "$REF/$id.txt")
+done > "$REF/taproot-primary-shapes.tsv"
+python3 tests/oracle/build_liana_v9_taproot_primary_path_shapes_fixture.py tests/fixtures/liana-v9-rust-taproot-multisig.json "$REF/taproot-primary-shapes-candidates.json" "$REF/taproot-primary-shapes.tsv" "$REF/taproot-primary-shapes.json"
+cmp tests/fixtures/liana-v9-rust-taproot-primary-path-shapes.json "$REF/taproot-primary-shapes.json"
+```
+
 The five `legacy-*` fixtures cover three policies built with pinned `LianaPolicy::new_legacy` plus two valid legacy descriptors parsed with pinned `LianaDescriptor::from_str`. Coverage includes a single-key primary/recovery, 2-of-3 primary/recovery, a 2-of-3 primary with three recovery paths (single-key, 2-of-3 and 1-of-3), the `andor(pk(recovery),older(42),pk(primary))` form, and a mainnet-instantiated form of the three-recovery threshold policy in the pinned Liana v2 test `liana/src/descriptors/mod.rs::bip32_derivs_pruning` (primary 3-of-3, recoveries older(3) 2-of-3 and older(6) 3-of-3, with distinct multipath values). They record mainnet receive/change addresses and `scriptPubKey`s at indices 0 and 1 (twenty pairs total). The additional `liana-v9-rust-signet-v2-bip32-derivs.json` fixture contains the exact public Signet descriptor from that pinned Liana v2 test and four Rust-derived receive/change outputs at indices 0 and 1. It uses tpubs (the testnet extended-key serialization shared by Signet), and Rust derives the addresses with `Network::Signet`. All fixtures use public xpubs/fingerprints only; no seed or private key is stored.
 
 To reproduce those fixtures from the pinned source clone:

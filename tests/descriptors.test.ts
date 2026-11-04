@@ -3,6 +3,7 @@ import { descriptorChecksum, splitDescriptorChecksum, parseMultipath, deriveDesc
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { parseDescriptorAst } from '../src/descriptors.js';
+import { validateLianaPolicySemantics } from '../src/liana-policy.js';
 import { createHash } from 'node:crypto';
 import { checksum as referenceDescriptorChecksum } from '@bitcoinerlab/descriptors';
 
@@ -38,6 +39,14 @@ const rustTaprootThreshRecoveryFixture = JSON.parse(readFileSync(resolve('tests/
   inferredPolicy: { primary: { threshold: number; keyCount: number }; recovery: Array<{ older: number; threshold: number; keyCount: number }> };
   descriptor: string;
   expected: Record<'receive' | 'change', Record<string, { address: string; scriptPubKey: string }>>;
+};
+const rustTaprootPrimaryPathShapesFixture = JSON.parse(readFileSync(resolve('tests/fixtures/liana-v9-rust-taproot-primary-path-shapes.json'), 'utf8')) as {
+  id: string;
+  provenance: { lianaCommit: string; miniscriptVersion: string; rustc: string; network: string; secretsOmitted: boolean };
+  sourceFixture: string;
+  sourceCase: string;
+  purpose: string;
+  cases: Array<{ id: string; transformation: string; expected: { accepted: boolean; primary?: { threshold: number; keyCount: number }; recovery?: Array<{ older: number; threshold: number; keyCount: number }>; error?: string }; descriptor: string }>;
 };
 const rustTaprootDuplicateOriginFixture = JSON.parse(readFileSync(resolve('tests/fixtures/liana-v9-rust-taproot-duplicate-origin-same-path.json'), 'utf8')) as {
   id: string;
@@ -313,6 +322,71 @@ describe('descriptor primitives', () => {
       }
     }
     expect(checked).toBe(20);
+  });
+  it('matches Rust primary-path extraction for ordered Taproot primary leaves', () => {
+    expect(rustTaprootPrimaryPathShapesFixture.id).toBe('liana-v9-rust-taproot-primary-path-shapes');
+    expect(rustTaprootPrimaryPathShapesFixture.provenance).toMatchObject({
+      lianaCommit: '398e622596e7530a328de3027cb2c09905f708c6',
+      miniscriptVersion: '11.2.0',
+      rustc: '1.80.0 (051478957 2024-07-21)',
+      network: 'mainnet',
+      secretsOmitted: true,
+    });
+    expect(rustTaprootPrimaryPathShapesFixture.sourceFixture).toBe('liana-v9-rust-taproot-multisig-vectors');
+    expect(rustTaprootPrimaryPathShapesFixture.sourceCase).toBe('multisig-one-recovery');
+    expect(rustTaprootPrimaryPathShapesFixture.cases.every((item) => !('expectedOutputs' in item))).toBe(true);
+
+    const source = rustMultisigFixture.cases.find((item) => item.id === rustTaprootPrimaryPathShapesFixture.sourceCase);
+    if (!source) throw new Error('expected pinned Rust source multisig case');
+    const sourceBody = splitDescriptorChecksum(source.descriptor).body;
+    const sourceAst = parseDescriptorAst(sourceBody).root;
+    if (sourceAst.kind !== 'call' || sourceAst.name !== 'tr' || sourceAst.arguments[1]?.kind !== 'tree') throw new Error('expected binary Taproot source tree');
+    const recovery = sourceAst.arguments[1].left.raw;
+    const primary = sourceAst.arguments[1].right.raw;
+    const recoveryPolicy = /multi_a\(2,([^)]*)\)/.exec(recovery)?.[1];
+    if (!recoveryPolicy) throw new Error('expected source recovery multi_a leaf');
+    const recoveryKeys = recoveryPolicy.split(',');
+    expect(recoveryKeys).toHaveLength(3);
+    const extraA = recoveryKeys[0]!.replace(/^\[4ba43603\]/, '[deadbeef]').replace('/1/<0;1>/*', '/2/<0;1>/*');
+    const extraB = recoveryKeys[1]!.replace(/^\[8dfc9b34\]/, '[cafebabe]').replace('/1/<0;1>/*', '/2/<0;1>/*');
+    expect(extraA).not.toBe(recoveryKeys[0]);
+    expect(extraB).not.toBe(recoveryKeys[1]);
+
+    const trees: Record<string, string> = {
+      'primary-multisig-then-single-key': `{${recovery},{${primary},pk(${extraA})}}`,
+      'primary-single-key-then-multisig': `{${recovery},{pk(${extraA}),${primary}}}`,
+      'two-primary-multisig-leaves': `{${recovery},{${primary},multi_a(2,${extraA},${extraB})}}`,
+      'two-primary-single-key-leaves': `{${recovery},{pk(${extraA}),pk(${extraB})}}`,
+    };
+    for (const item of rustTaprootPrimaryPathShapesFixture.cases) {
+      const tree = trees[item.id];
+      if (!tree) throw new Error(`unexpected primary-path oracle case: ${item.id}`);
+      const leafXpubs = [...tree.matchAll(/(?:xpub|tpub)[1-9A-HJ-NP-Za-km-z]+/g)].map((match) => match[0]);
+      const internal = constructUnspendableInternalXpub(leafXpubs, 'mainnet').descriptorKey;
+      const body = `tr(${internal},${tree})`;
+      expect(item.descriptor).toBe(descriptorWithBody(body));
+      if (item.expected.accepted) {
+        const wallet = parseLianaDescriptor(item.descriptor, 'mainnet');
+        expect(wallet.original).toBe(item.descriptor);
+        expect(wallet.ast.source).toBe(body);
+        const root = parseDescriptorAst(body).root;
+        if (root.kind !== 'call' || root.arguments[0]?.kind !== 'atom') throw new Error('expected descriptor with an internal key');
+        const internalOffset = body.indexOf(root.arguments[0].raw.trim());
+        const inferred = validateLianaPolicySemantics(body, internalOffset);
+        expect(inferred).toEqual({
+          primary: { kind: 'Multi', threshold: item.expected.primary!.threshold, keyCount: item.expected.primary!.keyCount },
+          recovery: item.expected.recovery!.map((path) => ({
+            older: path.older,
+            kind: path.keyCount === 1 ? 'Single' : 'Multi',
+            threshold: path.threshold,
+            keyCount: path.keyCount,
+          })),
+        });
+      } else {
+        expect(item.expected.error).toBe('IncompatibleDesc');
+        expect(() => parseLianaDescriptor(item.descriptor, 'mainnet')).toThrowError(expect.objectContaining({ code: 'INVALID_DESCRIPTOR' }));
+      }
+    }
   });
   it('matches the pinned DuplicateOriginSamePath rejection when primary key origins repeat', () => {
     expect(rustTaprootDuplicateOriginFixture.id).toBe('liana-v9-rust-taproot-duplicate-origin-same-path');

@@ -1,0 +1,72 @@
+{
+  "id": "liana-v9-rust-taproot-primary-path-shapes",
+  "provenance": {
+    "lianaVersion": "9.0.0",
+    "lianaCommit": "398e622596e7530a328de3027cb2c09905f708c6",
+    "miniscriptVersion": "11.2.0",
+    "rustc": "1.80.0 (051478957 2024-07-21)",
+    "network": "mainnet",
+    "secretsOmitted": true
+  },
+  "sourceFixture": "liana-v9-rust-taproot-multisig-vectors",
+  "sourceCase": "multisig-one-recovery",
+  "purpose": "parser-derived Taproot primary-path extraction boundary cases; rejection-only vectors add no address/script pairs",
+  "cases": [
+    {
+      "id": "primary-multisig-then-single-key",
+      "transformation": "Keep the source recovery and primary multisig; append one separate single-key primary leaf with a distinct origin and derivation path.",
+      "expected": {
+        "accepted": true,
+        "primary": {
+          "threshold": 3,
+          "keyCount": 4
+        },
+        "recovery": [
+          {
+            "older": 26352,
+            "threshold": 2,
+            "keyCount": 3
+          }
+        ]
+      },
+      "descriptor": "tr(xpub661MyMwAqRbcGZv8CkfKTyratAJVZfeWQVARNRvnFMkoCUB2QgntwXXTWYb3stLdhjnV8nFYyPdEpi6Ao3bTdovGzEwmLK4VcDQEaJNcu9k/<0;1>/*,{and_v(v:multi_a(2,[4ba43603]xpub661MyMwAqRbcEtUEgdXRTY6dJQG9fRgs7C5QomqETKMYBJVtSGpRqyHSmhWy8snovPd5oWZgQ14zUquxbxu7Z1umuXbN5VDpUL1QobD5xUY/1/<0;1>/*,[8dfc9b34]xpub661MyMwAqRbcGFeMhhkrJL6Yj3YKQFNZQSM2BAvoMmhdjNKBh43n5v3c4YT5dFtjkirfhqQHMd22br7cHAQXAV8cZdicedZJkNweja4WWBK/1/<0;1>/*,[56c4fac3]xpub661MyMwAqRbcFNWTmtbxHaYsjddAazfBQ51wm61veSzW3z2N7s1U7M9epMGsedj3unJKhXBY2sxWpQutwrZnpFuWe2vVVvLig8nFT4nmG67/1/<0;1>/*),older(26352)),{multi_a(3,[4ba43603]xpub661MyMwAqRbcEtUEgdXRTY6dJQG9fRgs7C5QomqETKMYBJVtSGpRqyHSmhWy8snovPd5oWZgQ14zUquxbxu7Z1umuXbN5VDpUL1QobD5xUY/0/<0;1>/*,[8dfc9b34]xpub661MyMwAqRbcGFeMhhkrJL6Yj3YKQFNZQSM2BAvoMmhdjNKBh43n5v3c4YT5dFtjkirfhqQHMd22br7cHAQXAV8cZdicedZJkNweja4WWBK/0/<0;1>/*,[56c4fac3]xpub661MyMwAqRbcFNWTmtbxHaYsjddAazfBQ51wm61veSzW3z2N7s1U7M9epMGsedj3unJKhXBY2sxWpQutwrZnpFuWe2vVVvLig8nFT4nmG67/0/<0;1>/*),pk([deadbeef]xpub661MyMwAqRbcEtUEgdXRTY6dJQG9fRgs7C5QomqETKMYBJVtSGpRqyHSmhWy8snovPd5oWZgQ14zUquxbxu7Z1umuXbN5VDpUL1QobD5xUY/2/<0;1>/*)}})#8tl2dss9"
+    },
+    {
+      "id": "primary-single-key-then-multisig",
+      "transformation": "Keep the source recovery and primary multisig; place a separate single-key primary leaf before the multisig leaf.",
+      "expected": {
+        "accepted": false,
+        "error": "IncompatibleDesc"
+      },
+      "descriptor": "tr(xpub661MyMwAqRbcEspuX89JjqoxwZs5Uw2x97MBTbyyinbiz6ZDHd4SM2VnjkTBLT9BPW1jxDZkBSeTTbdawkmMSNxmCsqKW3oi4Meqhe7L455/<0;1>/*,{and_v(v:multi_a(2,[4ba43603]xpub661MyMwAqRbcEtUEgdXRTY6dJQG9fRgs7C5QomqETKMYBJVtSGpRqyHSmhWy8snovPd5oWZgQ14zUquxbxu7Z1umuXbN5VDpUL1QobD5xUY/1/<0;1>/*,[8dfc9b34]xpub661MyMwAqRbcGFeMhhkrJL6Yj3YKQFNZQSM2BAvoMmhdjNKBh43n5v3c4YT5dFtjkirfhqQHMd22br7cHAQXAV8cZdicedZJkNweja4WWBK/1/<0;1>/*,[56c4fac3]xpub661MyMwAqRbcFNWTmtbxHaYsjddAazfBQ51wm61veSzW3z2N7s1U7M9epMGsedj3unJKhXBY2sxWpQutwrZnpFuWe2vVVvLig8nFT4nmG67/1/<0;1>/*),older(26352)),{pk([deadbeef]xpub661MyMwAqRbcEtUEgdXRTY6dJQG9fRgs7C5QomqETKMYBJVtSGpRqyHSmhWy8snovPd5oWZgQ14zUquxbxu7Z1umuXbN5VDpUL1QobD5xUY/2/<0;1>/*),multi_a(3,[4ba43603]xpub661MyMwAqRbcEtUEgdXRTY6dJQG9fRgs7C5QomqETKMYBJVtSGpRqyHSmhWy8snovPd5oWZgQ14zUquxbxu7Z1umuXbN5VDpUL1QobD5xUY/0/<0;1>/*,[8dfc9b34]xpub661MyMwAqRbcGFeMhhkrJL6Yj3YKQFNZQSM2BAvoMmhdjNKBh43n5v3c4YT5dFtjkirfhqQHMd22br7cHAQXAV8cZdicedZJkNweja4WWBK/0/<0;1>/*,[56c4fac3]xpub661MyMwAqRbcFNWTmtbxHaYsjddAazfBQ51wm61veSzW3z2N7s1U7M9epMGsedj3unJKhXBY2sxWpQutwrZnpFuWe2vVVvLig8nFT4nmG67/0/<0;1>/*)}})#pfk5zs6y"
+    },
+    {
+      "id": "two-primary-multisig-leaves",
+      "transformation": "Keep the source recovery and primary multisig; add a second distinct primary multisig leaf.",
+      "expected": {
+        "accepted": false,
+        "error": "IncompatibleDesc"
+      },
+      "descriptor": "tr(xpub661MyMwAqRbcF3rRifFsAfHEqYHqigQ2V6Hj39aBFXj3cMydx6YHuSvwpfebLpPjXoDZCePLE6KZ49NusLBnZErGZ91Zdb3ZX7h2H7Qoome/<0;1>/*,{and_v(v:multi_a(2,[4ba43603]xpub661MyMwAqRbcEtUEgdXRTY6dJQG9fRgs7C5QomqETKMYBJVtSGpRqyHSmhWy8snovPd5oWZgQ14zUquxbxu7Z1umuXbN5VDpUL1QobD5xUY/1/<0;1>/*,[8dfc9b34]xpub661MyMwAqRbcGFeMhhkrJL6Yj3YKQFNZQSM2BAvoMmhdjNKBh43n5v3c4YT5dFtjkirfhqQHMd22br7cHAQXAV8cZdicedZJkNweja4WWBK/1/<0;1>/*,[56c4fac3]xpub661MyMwAqRbcFNWTmtbxHaYsjddAazfBQ51wm61veSzW3z2N7s1U7M9epMGsedj3unJKhXBY2sxWpQutwrZnpFuWe2vVVvLig8nFT4nmG67/1/<0;1>/*),older(26352)),{multi_a(3,[4ba43603]xpub661MyMwAqRbcEtUEgdXRTY6dJQG9fRgs7C5QomqETKMYBJVtSGpRqyHSmhWy8snovPd5oWZgQ14zUquxbxu7Z1umuXbN5VDpUL1QobD5xUY/0/<0;1>/*,[8dfc9b34]xpub661MyMwAqRbcGFeMhhkrJL6Yj3YKQFNZQSM2BAvoMmhdjNKBh43n5v3c4YT5dFtjkirfhqQHMd22br7cHAQXAV8cZdicedZJkNweja4WWBK/0/<0;1>/*,[56c4fac3]xpub661MyMwAqRbcFNWTmtbxHaYsjddAazfBQ51wm61veSzW3z2N7s1U7M9epMGsedj3unJKhXBY2sxWpQutwrZnpFuWe2vVVvLig8nFT4nmG67/0/<0;1>/*),multi_a(2,[deadbeef]xpub661MyMwAqRbcEtUEgdXRTY6dJQG9fRgs7C5QomqETKMYBJVtSGpRqyHSmhWy8snovPd5oWZgQ14zUquxbxu7Z1umuXbN5VDpUL1QobD5xUY/2/<0;1>/*,[cafebabe]xpub661MyMwAqRbcGFeMhhkrJL6Yj3YKQFNZQSM2BAvoMmhdjNKBh43n5v3c4YT5dFtjkirfhqQHMd22br7cHAQXAV8cZdicedZJkNweja4WWBK/2/<0;1>/*)}})#4qt648gk"
+    },
+    {
+      "id": "two-primary-single-key-leaves",
+      "transformation": "Replace the source primary multisig leaf with two ordered single-key primary leaves; retain the recovery path.",
+      "expected": {
+        "accepted": true,
+        "primary": {
+          "threshold": 1,
+          "keyCount": 2
+        },
+        "recovery": [
+          {
+            "older": 26352,
+            "threshold": 2,
+            "keyCount": 3
+          }
+        ]
+      },
+      "descriptor": "tr(xpub661MyMwAqRbcGN22KjqwLfik1Epa4SavHb3rBtyp2h3ujadRF6aEQZgCoKajBXrDUE17a4n8NQ554UjES1DvVw5PCy5rTWM6XTyTTLZ8THA/<0;1>/*,{and_v(v:multi_a(2,[4ba43603]xpub661MyMwAqRbcEtUEgdXRTY6dJQG9fRgs7C5QomqETKMYBJVtSGpRqyHSmhWy8snovPd5oWZgQ14zUquxbxu7Z1umuXbN5VDpUL1QobD5xUY/1/<0;1>/*,[8dfc9b34]xpub661MyMwAqRbcGFeMhhkrJL6Yj3YKQFNZQSM2BAvoMmhdjNKBh43n5v3c4YT5dFtjkirfhqQHMd22br7cHAQXAV8cZdicedZJkNweja4WWBK/1/<0;1>/*,[56c4fac3]xpub661MyMwAqRbcFNWTmtbxHaYsjddAazfBQ51wm61veSzW3z2N7s1U7M9epMGsedj3unJKhXBY2sxWpQutwrZnpFuWe2vVVvLig8nFT4nmG67/1/<0;1>/*),older(26352)),{pk([deadbeef]xpub661MyMwAqRbcEtUEgdXRTY6dJQG9fRgs7C5QomqETKMYBJVtSGpRqyHSmhWy8snovPd5oWZgQ14zUquxbxu7Z1umuXbN5VDpUL1QobD5xUY/2/<0;1>/*),pk([cafebabe]xpub661MyMwAqRbcGFeMhhkrJL6Yj3YKQFNZQSM2BAvoMmhdjNKBh43n5v3c4YT5dFtjkirfhqQHMd22br7cHAQXAV8cZdicedZJkNweja4WWBK/2/<0;1>/*)}})#awjdp64l"
+    }
+  ]
+}
