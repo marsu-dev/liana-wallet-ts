@@ -19,6 +19,16 @@ const rustMultisigFixture = JSON.parse(readFileSync(resolve('tests/fixtures/lian
     expected: Record<'receive' | 'change', Record<string, { address: string; scriptPubKey: string }>>;
   }>;
 };
+const rustTaprootThreshPrimaryFixture = JSON.parse(readFileSync(resolve('tests/fixtures/liana-v9-rust-taproot-thresh-primary.json'), 'utf8')) as {
+  id: string;
+  provenance: { lianaCommit: string; miniscriptVersion: string; rustc: string; network: string; secretsOmitted: boolean };
+  sourceFixture: string;
+  sourceCase: string;
+  transformation: string;
+  inferredPolicy: { primary: { threshold: number; keyCount: number }; recovery: Array<{ older: number; threshold: number; keyCount: number }> };
+  descriptor: string;
+  expected: Record<'receive' | 'change', Record<string, { address: string; scriptPubKey: string }>>;
+};
 const rustPolicyRejectionFixture = JSON.parse(readFileSync(resolve('tests/fixtures/liana-v9-rust-policy-rejections.json'), 'utf8')) as {
   provenance: { lianaCommit: string; miniscriptVersion: string; rustc: string; oracle: string };
   cases: Array<{ id: string; descriptor: string; expected: { accepted: boolean; error: string } }>;
@@ -161,6 +171,52 @@ describe('descriptor primitives', () => {
           expect(Buffer.from(actual.scriptPubKey).toString('hex'), `${item.id} ${branch} ${index} scriptPubKey`).toBe(expected.scriptPubKey);
           checked++;
         }
+      }
+    }
+    expect(checked).toBe(20);
+  });
+  it('matches the pinned parser-derived key-only thresh primary policy', () => {
+    expect(rustTaprootThreshPrimaryFixture.id).toBe('liana-v9-rust-taproot-thresh-primary-vectors');
+    expect(rustTaprootThreshPrimaryFixture.provenance).toMatchObject({
+      lianaCommit: '398e622596e7530a328de3027cb2c09905f708c6',
+      miniscriptVersion: '11.2.0',
+      rustc: '1.80.0 (051478957 2024-07-21)',
+      network: 'mainnet',
+      secretsOmitted: true,
+    });
+    expect(rustTaprootThreshPrimaryFixture.sourceFixture).toBe('liana-v9-rust-taproot-multisig-vectors');
+    expect(rustTaprootThreshPrimaryFixture.sourceCase).toBe('multisig-one-recovery');
+    expect(rustTaprootThreshPrimaryFixture.inferredPolicy).toEqual({
+      primary: { threshold: 3, keyCount: 3 },
+      recovery: [{ older: 26352, threshold: 2, keyCount: 3 }],
+    });
+    expect(rustTaprootThreshPrimaryFixture.transformation).toContain('only the primary multi_a(3,key1,key2,key3) leaf');
+
+    const source = rustMultisigFixture.cases.find((item) => item.id === rustTaprootThreshPrimaryFixture.sourceCase);
+    if (!source) throw new Error('expected pinned Rust source multisig case');
+    const sourceBody = splitDescriptorChecksum(source.descriptor).body;
+    const primaryStart = sourceBody.indexOf('multi_a(3,');
+    const primaryEnd = sourceBody.indexOf(')', primaryStart) + 1;
+    expect(primaryStart).toBeGreaterThan(0);
+    expect(primaryEnd).toBeGreaterThan(primaryStart);
+    const sourcePrimary = sourceBody.slice(primaryStart, primaryEnd);
+    const keys = sourcePrimary.slice('multi_a(3,'.length, -1).split(',');
+    expect(keys).toHaveLength(3);
+    const candidatePrimary = `thresh(3,pk(${keys[0]}),s:pk(${keys[1]}),s:pk(${keys[2]}))`;
+    const candidateBody = sourceBody.replace(sourcePrimary, candidatePrimary);
+    expect(candidateBody.replace(candidatePrimary, sourcePrimary)).toBe(sourceBody);
+    expect(rustTaprootThreshPrimaryFixture.descriptor).toBe(descriptorWithBody(candidateBody));
+
+    const wallet = parseLianaDescriptor(rustTaprootThreshPrimaryFixture.descriptor, 'mainnet');
+    expect(wallet.original).toBe(rustTaprootThreshPrimaryFixture.descriptor);
+    let checked = 0;
+    for (const branch of ['receive', 'change'] as const) {
+      for (let index = 0; index < 10; index++) {
+        const actual = deriveWalletAddress(wallet, branch, index);
+        const expected = rustTaprootThreshPrimaryFixture.expected[branch][String(index)]!;
+        expect(actual.address, `${branch} ${index} address`).toBe(expected.address);
+        expect(Buffer.from(actual.scriptPubKey).toString('hex'), `${branch} ${index} scriptPubKey`).toBe(expected.scriptPubKey);
+        checked++;
       }
     }
     expect(checked).toBe(20);

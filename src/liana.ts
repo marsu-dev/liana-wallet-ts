@@ -82,7 +82,7 @@ function validateLianaTaprootPolicy(body: string): void {
     throw new WalletDerivationError('INVALID_DESCRIPTOR', 'A spendable Liana Taproot internal key must be an originated multipath xpub with two normal derivation choices and an unhardened wildcard');
   }
   const primaryLeaves = leaves.filter((leaf) => !/\bolder\s*\(/.test(leaf));
-  if (primaryLeaves.some((leaf) => !isLianaTaprootKeyPolicy(leaf, hasMultipath))) {
+  if (primaryLeaves.some((leaf) => !isLianaTaprootKeyPolicy(leaf, hasMultipath, true))) {
     throw new WalletDerivationError('INVALID_DESCRIPTOR', 'Liana Taproot primary leaves must be key-only policies');
   }
   if (numsInternal && primaryLeaves.length === 0) {
@@ -155,13 +155,22 @@ function isLianaKeyPolicy(expression: string): boolean {
   }
   return false;
 }
-function isLianaTaprootKeyPolicy(expression: string, requireMultipath: boolean): boolean {
+function isLianaTaprootKeyPolicy(expression: string, requireMultipath: boolean, allowKeyThreshold = false): boolean {
   const isSignerKey = requireMultipath ? isDescriptorXpub : isLianaTaprootDescriptorKey;
   const call = descriptorCall(expression);
   if (call?.name === 'pk') return call.args.length === 1 && isSignerKey(call.args[0]!);
   if (call?.name === 'multi_a') {
     const threshold = call.args[0]!;
     return call.args.length >= 2 && isDecimalToken(threshold) && Number(threshold) >= 1 && Number(threshold) <= call.args.length - 1 && call.args.slice(1).every(isSignerKey);
+  }
+  if (allowKeyThreshold && call?.name === 'thresh') {
+    const threshold = call.args[0]!;
+    const keys = call.args.slice(1).map((argument, index) => {
+      const keyExpression = index === 0 ? argument : argument.startsWith('s:') ? argument.slice(2) : '';
+      const keyCall = descriptorCall(keyExpression);
+      return keyCall?.name === 'pk' && keyCall.args.length === 1 && isSignerKey(keyCall.args[0]!);
+    });
+    return keys.length >= 2 && isDecimalToken(threshold) && Number(threshold) >= 1 && Number(threshold) <= keys.length && keys.every(Boolean);
   }
   return false;
 }
