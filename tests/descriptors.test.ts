@@ -19,6 +19,14 @@ const rustMultisigFixture = JSON.parse(readFileSync(resolve('tests/fixtures/lian
     expected: Record<'receive' | 'change', Record<string, { address: string; scriptPubKey: string }>>;
   }>;
 };
+const rustPolicyRejectionFixture = JSON.parse(readFileSync(resolve('tests/fixtures/liana-v9-rust-policy-rejections.json'), 'utf8')) as {
+  provenance: { lianaCommit: string; miniscriptVersion: string; rustc: string; oracle: string };
+  cases: Array<{ id: string; descriptor: string; expected: { accepted: boolean; error: string } }>;
+};
+const rustSignetSinglePrimaryFixture = JSON.parse(readFileSync(resolve('tests/fixtures/liana-v9-rust-signet-single-primary-recovery.json'), 'utf8')) as {
+  provenance: { lianaCommit: string; miniscriptVersion: string; network: string };
+  multipathDescriptorBody: string;
+};
 
 const legacyWshFixture = JSON.parse(readFileSync(resolve('tests/fixtures/liana-v9-rust-legacy-wsh.json'), 'utf8')) as {
   provenance: { lianaCommit: string; miniscriptVersion: string; network: string };
@@ -137,6 +145,36 @@ describe('descriptor primitives', () => {
       }
     }
     expect(checked).toBe(20);
+  });
+  it('rejects Taproot recovery paths with a hashlock despite a valid older() condition', () => {
+    expect(rustPolicyRejectionFixture.provenance).toMatchObject({ lianaCommit: '398e622596e7530a328de3027cb2c09905f708c6', miniscriptVersion: '11.2.0', rustc: '1.80.0 (051478957 2024-07-21)' });
+    const item = rustPolicyRejectionFixture.cases.find((candidate) => candidate.id === 'taproot-recovery-hashlock');
+    if (!item) throw new Error('expected a pinned Rust policy-rejection vector');
+    expect(item.expected.accepted).toBe(false);
+    expect(item.expected.error).toBe('Descriptor is not compatible with a Liana spending policy.');
+    expect(() => parseLianaDescriptor(item.descriptor, 'mainnet')).toThrowError(expect.objectContaining({ code: 'INVALID_DESCRIPTOR' }));
+  });
+  it('rejects a Taproot primary leaf constrained by a hashlock', () => {
+    const item = rustPolicyRejectionFixture.cases.find((candidate) => candidate.id === 'taproot-primary-hashlock');
+    if (!item) throw new Error('expected a pinned Rust primary-policy rejection vector');
+    expect(item.expected.accepted).toBe(false);
+    expect(() => parseLianaDescriptor(item.descriptor, 'mainnet')).toThrowError(expect.objectContaining({ code: 'INVALID_DESCRIPTOR' }));
+  });
+  it('rejects a spendable Taproot internal key flattened while recovery remains multipath', () => {
+    expect(rustSignetSinglePrimaryFixture.provenance).toMatchObject({
+      lianaCommit: '398e622596e7530a328de3027cb2c09905f708c6',
+      miniscriptVersion: '11.2.0',
+      network: 'signet',
+    });
+    const body = rustSignetSinglePrimaryFixture.multipathDescriptorBody.replace('/<0;1>/*', '/0/*');
+    const malformed = descriptorWithBody(body);
+    expect(body).toContain('/0/*');
+    expect(body).toContain('/<0;1>/*');
+    expect(() => parseLianaDescriptor(malformed, 'signet')).toThrowError(expect.objectContaining({ code: 'INVALID_DESCRIPTOR' }));
+  });
+  it('continues to import the fixed-branch community receive/change descriptors', () => {
+    expect(parseLianaDescriptor(fixture.receive.descriptor, 'signet').network).toBe('signet');
+    expect(parseLianaDescriptor(fixture.change.descriptor, 'signet').network).toBe('signet');
   });
   it('retains a multi_a Taproot recovery leaf beside multiple timelocked recovery branches', () => {
     const item = rustMultisigFixture.cases.find((candidate) => candidate.id === 'taproot-multi-a-multiple-recovery');

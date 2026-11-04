@@ -63,13 +63,28 @@ function validateLianaTaprootPolicy(body: string): void {
     if (timelocks.length !== 1 || timelock < 1 || timelock > 0xffff) {
       throw new WalletDerivationError('INVALID_DESCRIPTOR', 'Each Liana recovery path must contain exactly one block-based older() timelock in the uint16 range');
     }
+    const recovery = descriptorCall(leaf);
+    const keyExpression = recovery?.name === 'and_v' && recovery.args.length === 2 && recovery.args[0]!.startsWith('v:')
+      ? recovery.args[0]!.slice(2)
+      : '';
+    const older = recovery?.name === 'and_v' && recovery.args.length === 2 ? descriptorCall(recovery.args[1]!) : undefined;
+    if (!isLianaTaprootKeyPolicy(keyExpression) || older?.name !== 'older' || older.args.length !== 1 || !isDecimalToken(older.args[0]!)) {
+      throw new WalletDerivationError('INVALID_DESCRIPTOR', 'Liana Taproot recovery paths must combine a key-only signer policy with exactly one older() timelock');
+    }
     if (recoveryTimelocks.has(timelock)) throw new WalletDerivationError('INVALID_DESCRIPTOR', 'Liana recovery paths must have distinct relative timelocks');
     recoveryTimelocks.add(timelock);
     if (!/(?:xpub|tpub)[1-9A-HJ-NP-Za-km-z]+/.test(leaf)) throw new WalletDerivationError('INVALID_DESCRIPTOR', 'Each Liana recovery path must contain at least one signer key');
     rejectDuplicateOrigins(originFingerprints(leaf), 'recovery');
   }
+  const hasMultipath = body.includes('<');
   const numsInternal = /^(?:xpub|tpub)[1-9A-HJ-NP-Za-km-z]+\/<0;1>\/\*$/.test(tr[1]!);
+  if (hasMultipath && !numsInternal && !isDescriptorXpub(tr[1]!)) {
+    throw new WalletDerivationError('INVALID_DESCRIPTOR', 'A spendable Liana Taproot internal key must be an originated multipath xpub with two normal derivation choices and an unhardened wildcard');
+  }
   const primaryLeaves = leaves.filter((leaf) => !/\bolder\s*\(/.test(leaf));
+  if (primaryLeaves.some((leaf) => !isLianaTaprootKeyPolicy(leaf))) {
+    throw new WalletDerivationError('INVALID_DESCRIPTOR', 'Liana Taproot primary leaves must be key-only policies');
+  }
   if (numsInternal && primaryLeaves.length === 0) {
     throw new WalletDerivationError('INVALID_DESCRIPTOR', 'A NUMS internal key requires a separate always-available primary path in the TapTree');
   }
@@ -108,6 +123,18 @@ function isDescriptorXpub(value: string): boolean {
     return isNormalChildIndex(segment);
   });
 }
+function isLianaTaprootDescriptorKey(value: string): boolean {
+  if (isDescriptorXpub(value)) return true;
+  const text = value.trim();
+  const match = new RegExp(`^${KEY_WITH_ORIGIN.source}`).exec(text);
+  if (!match) return false;
+  const suffix = text.slice(match[0].length);
+  if (!suffix.endsWith('/*')) return false;
+  const derivation = suffix.slice(0, -2);
+  if (!derivation.startsWith('/')) return false;
+  const segments = derivation.slice(1).split('/');
+  return segments.length > 0 && segments.every(isNormalChildIndex);
+}
 function isLianaKeyLeaf(expression: string): boolean {
   const value = expression.startsWith('a:') ? expression.slice(2) : expression;
   const call = descriptorCall(value);
@@ -125,6 +152,15 @@ function isLianaKeyPolicy(expression: string): boolean {
   if (call.name === 'thresh') {
     const threshold = call.args[0]!;
     return call.args.length >= 3 && isDecimalToken(threshold) && Number(threshold) >= 1 && Number(threshold) <= call.args.length - 1 && call.args.slice(1).every(isLianaKeyLeaf);
+  }
+  return false;
+}
+function isLianaTaprootKeyPolicy(expression: string): boolean {
+  const call = descriptorCall(expression);
+  if (call?.name === 'pk') return call.args.length === 1 && isLianaTaprootDescriptorKey(call.args[0]!);
+  if (call?.name === 'multi_a') {
+    const threshold = call.args[0]!;
+    return call.args.length >= 3 && isDecimalToken(threshold) && Number(threshold) >= 1 && Number(threshold) <= call.args.length - 1 && call.args.slice(1).every(isLianaTaprootDescriptorKey);
   }
   return false;
 }
@@ -238,10 +274,10 @@ export function parseLianaDescriptor(text: string, network: Network): WalletDesc
     }
   }
   if (signers.length === 0) throw new WalletDerivationError('NO_SIGNER_KEYS', 'Descriptor contains no originated xpub/tpub signer keys');
-  validateLianaDescriptorPolicy(body);
   const unoriginatedInternalKeyOffset = validateNumsInternalKey(body, network);
   validateKeyOrigins(body, unoriginatedInternalKeyOffset);
   validateUniqueDescriptorKeys(body, unoriginatedInternalKeyOffset);
+  validateLianaDescriptorPolicy(body);
   try {
     const hasMultipath = body.includes('<');
     const selections = hasMultipath ? [0, 1] as const : [0] as const;

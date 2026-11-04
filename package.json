@@ -8,7 +8,7 @@
   "exports": { ".": "./dist/index.js" },
   "types": "./dist/index.d.ts",
   "bin": { "liana-wallet-ts": "./dist/cli.js" },
-  "files": ["dist", "README.md", "LICENSE", "SECURITY.md", "docs/COMPATIBILITY.md"],
+  "files": ["dist", "README.md", "LICENSE", "SECURITY.md", "docs/COMPATIBILITY.md", "docs/TECHNICAL.md"],
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "test": "vitest run",

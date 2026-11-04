@@ -1,0 +1,33 @@
+{
+  "id": "liana-v9-rust-policy-rejections",
+  "provenance": {
+    "lianaVersion": "9.0.0",
+    "lianaCommit": "398e622596e7530a328de3027cb2c09905f708c6",
+    "miniscriptVersion": "11.2.0",
+    "rustc": "1.80.0 (051478957 2024-07-21)",
+    "cargoLock": "Liana repository Cargo.lock at the pinned commit",
+    "oracle": "LianaDescriptor::from_str; expected error message asserted by Rust harness",
+    "testKeys": "Published public/test-only xpub material only; no seed or private key",
+    "secretsOmitted": true
+  },
+  "cases": [
+    {
+      "id": "taproot-recovery-hashlock",
+      "descriptor": "tr([4ba43603]xpub661MyMwAqRbcEtUEgdXRTY6dJQG9fRgs7C5QomqETKMYBJVtSGpRqyHSmhWy8snovPd5oWZgQ14zUquxbxu7Z1umuXbN5VDpUL1QobD5xUY/0/<0;1>/*,and_v(v:pk([8dfc9b34]xpub661MyMwAqRbcGFeMhhkrJL6Yj3YKQFNZQSM2BAvoMmhdjNKBh43n5v3c4YT5dFtjkirfhqQHMd22br7cHAQXAV8cZdicedZJkNweja4WWBK/1/<0;1>/*),and_v(v:sha256(0000000000000000000000000000000000000000000000000000000000000000),older(42))))#2a0vcw08",
+      "reason": "The Taproot recovery leaf combines a signer key, sha256 condition and older() timelock; pinned Liana rejects this non-key-only recovery policy.",
+      "expected": {
+        "accepted": false,
+        "error": "Descriptor is not compatible with a Liana spending policy."
+      }
+    },
+    {
+      "id": "taproot-primary-hashlock",
+      "descriptor": "tr([4ba43603]xpub661MyMwAqRbcEtUEgdXRTY6dJQG9fRgs7C5QomqETKMYBJVtSGpRqyHSmhWy8snovPd5oWZgQ14zUquxbxu7Z1umuXbN5VDpUL1QobD5xUY/0/<0;1>/*,{and_v(v:pk([56c4fac3]xpub661MyMwAqRbcFNWTmtbxHaYsjddAazfBQ51wm61veSzW3z2N7s1U7M9epMGsedj3unJKhXBY2sxWpQutwrZnpFuWe2vVVvLig8nFT4nmG67/0/<0;1>/*),sha256(0000000000000000000000000000000000000000000000000000000000000000)),and_v(v:pk([8dfc9b34]xpub661MyMwAqRbcGFeMhhkrJL6Yj3YKQFNZQSM2BAvoMmhdjNKBh43n5v3c4YT5dFtjkirfhqQHMd22br7cHAQXAV8cZdicedZJkNweja4WWBK/1/<0;1>/*),older(36))})#jad3m2e2",
+      "reason": "The Taproot tree contains a signer key constrained by sha256 in a primary branch; pinned Liana rejects this non-key-only primary policy.",
+      "expected": {
+        "accepted": false,
+        "error": "Descriptor is not compatible with a Liana spending policy."
+      }
+    }
+  ]
+}

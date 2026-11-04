@@ -24,9 +24,9 @@ function parsePath(path: string): string[] {
     return part;
   });
 }
-export function mnemonicToSeed(mnemonic: string, passphrase = ''): Uint8Array {
+export function mnemonicToSeed(mnemonic: string, passphrase = '', wordlist?: string[]): Uint8Array {
   const normalized = mnemonic.normalize('NFKD');
-  if (!bip39.validateMnemonic(normalized)) throw new WalletDerivationError('INVALID_SEED', 'Invalid BIP39 mnemonic');
+  if (!bip39.validateMnemonic(normalized, wordlist)) throw new WalletDerivationError('INVALID_SEED', 'Invalid BIP39 mnemonic');
   return bip39.mnemonicToSeedSync(normalized, passphrase.normalize('NFKD'));
 }
 export function deriveAccountXpub(seed: Uint8Array, path: string, network: Network): AccountKey {

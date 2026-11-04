@@ -1,0 +1,105 @@
+{
+  "id": "liana-v9-rust-signet-single-primary-recovery-vectors",
+  "provenance": {
+    "source": "https://gist.github.com/jdlcdl/b17c6b551839adb5b7b7d4ef9574e48e",
+    "lianaVersion": "9.0.0",
+    "lianaCommit": "398e622596e7530a328de3027cb2c09905f708c6",
+    "miniscriptVersion": "11.2.0",
+    "rustc": "1.80.0 (051478957 2024-07-21)",
+    "network": "signet",
+    "generator": "LianaDescriptor::from_str; primary Single, recovery older(36) Single; receive_descriptor/change_descriptor, indices 0..9, address(Network::Signet), script_pubkey",
+    "extendedKeySerialization": "tpub (Network::Testnet); address network Signet",
+    "secretsOmitted": true
+  },
+  "multipathDescriptorBody": "tr([07fd816d/48'/1'/0'/2']tpubDDvFWduSiwhW7hUbL1oMyUfcNgeSyZgHbooe1WjHyRaXYH3uUjm1xdxWXAGbQFn8QGScDg4b4a6WMGNiEAq2uQdmPDhDKPE5Dr8DX24mwd5/<0;1>/*,and_v(v:pk([da855a1f/48'/1'/0'/2']tpubDEHRt73d4guqR5BLGQud4XMW8vDCGHUj54qDTFtsdFstF6PAYx1oAy3jfKg1PffqLUWuSsXmnetKeTJFKfKLXeJR97yUuqvvojnoBcUDHg5/<0;1>/*),older(36)))",
+  "descriptors": {
+    "receive": "tr([07fd816d/48'/1'/0'/2']tpubDDvFWduSiwhW7hUbL1oMyUfcNgeSyZgHbooe1WjHyRaXYH3uUjm1xdxWXAGbQFn8QGScDg4b4a6WMGNiEAq2uQdmPDhDKPE5Dr8DX24mwd5/0/*,and_v(v:pk([da855a1f/48'/1'/0'/2']tpubDEHRt73d4guqR5BLGQud4XMW8vDCGHUj54qDTFtsdFstF6PAYx1oAy3jfKg1PffqLUWuSsXmnetKeTJFKfKLXeJR97yUuqvvojnoBcUDHg5/0/*),older(36)))#22y0dhdd",
+    "change": "tr([07fd816d/48'/1'/0'/2']tpubDDvFWduSiwhW7hUbL1oMyUfcNgeSyZgHbooe1WjHyRaXYH3uUjm1xdxWXAGbQFn8QGScDg4b4a6WMGNiEAq2uQdmPDhDKPE5Dr8DX24mwd5/1/*,and_v(v:pk([da855a1f/48'/1'/0'/2']tpubDEHRt73d4guqR5BLGQud4XMW8vDCGHUj54qDTFtsdFstF6PAYx1oAy3jfKg1PffqLUWuSsXmnetKeTJFKfKLXeJR97yUuqvvojnoBcUDHg5/1/*),older(36)))#gcgkq5nc"
+  },
+  "expected": {
+    "receive": {
+      "0": {
+        "address": "tb1pvpqeka564yfls5ma8ps56q2xd4sn8mstm7pe6nfxezw3wc963pysnda6x9",
+        "scriptPubKey": "512060419b769aa913f8537d38614d01466d6133ee0bdf839d4d26c89d1760ba8849"
+      },
+      "1": {
+        "address": "tb1pgfatfr9w9fa4efzmdghhkwxy6xgjmlw7qhpv7lnxhsxvvwvw724qwcfukw",
+        "scriptPubKey": "5120427ab48cae2a7b5ca45b6a2f7b38c4d1912dfdde05c2cf7e66bc0cc6398ef2aa"
+      },
+      "2": {
+        "address": "tb1pevejlzshsf9mw3zp6afnmucumpu2f5cl3wy4jupl30sclvlde9dq60j8cd",
+        "scriptPubKey": "5120cb332f8a17824bb74441d7533df31cd878a4d31f8b8959703f8be18fb3edc95a"
+      },
+      "3": {
+        "address": "tb1pr7gpsykqs9jyjm2a3vyeg6dpp3j7c79l53lsux760pay56ehrygq9q3wyu",
+        "scriptPubKey": "51201f901812c08164496d5d8b099469a10c65ec78bfa47f0e1bda787a4a6b371910"
+      },
+      "4": {
+        "address": "tb1pk76gc7834mucf22sn4f8yxar36m6zv3dpv0328kg6cxd26pgufrsmzth7q",
+        "scriptPubKey": "5120b7b48c78f1aef984a9509d52721ba38eb7a1322d0b1f151ec8d60cd56828e247"
+      },
+      "5": {
+        "address": "tb1pveftxgw6qv3kj0gte0nms4guz4rt6690em7a436r66hqc82u00fsyml8m5",
+        "scriptPubKey": "51206652b321da0323693d0bcbe7b8551c1546bd68afcefddac743d6ae0c1d5c7bd3"
+      },
+      "6": {
+        "address": "tb1p5l2mvx28v85dl4dhg8y3gztzttucgva22h8k2v5496hmj2mxqzfsml65wv",
+        "scriptPubKey": "5120a7d5b6194761e8dfd5b741c91409625af98433aa55cf6532952eafb92b660093"
+      },
+      "7": {
+        "address": "tb1pgvvpkuflm6ezudeltqys069klx2t6uz35zzmqsgr8lc2skz28dss94t06y",
+        "scriptPubKey": "512043181b713fdeb22e373f580907e8b6f994bd7051a085b041033ff0a8584a3b61"
+      },
+      "8": {
+        "address": "tb1pca535ljvzwk3h2qmpau97fma05zksy3kma58d798a357999cmdsq69t0df",
+        "scriptPubKey": "5120c7691a7e4c13ad1ba81b0f785f277d7d05681236df6876f8a7ec69e294b8db60"
+      },
+      "9": {
+        "address": "tb1pkpa5365e2uq7vwljfchcrrryrq4u9xrpk2m82thruxgpcq6006mscqkjfc",
+        "scriptPubKey": "5120b07b48ea995701e63bf24e2f818c64182bc29861b2b6752ee3e1901c034f7eb7"
+      }
+    },
+    "change": {
+      "0": {
+        "address": "tb1prn8cy7j5q8sc2g7ahgexmjfxauwvluvp7m80gvw9rzzrdnpculpsw6h524",
+        "scriptPubKey": "51201ccf827a5401e18523ddba326dc926ef1ccff181f6cef431c5188436cc38e7c3"
+      },
+      "1": {
+        "address": "tb1pxvzcflpfkyh56l7ycrshdsw49pfeq4j57v9uwf2vh4d8nn8r9xjq5yuqq5",
+        "scriptPubKey": "5120330584fc29b12f4d7fc4c0e176c1d52853905654f30bc7254cbd5a79cce329a4"
+      },
+      "2": {
+        "address": "tb1p7gvvxu2ly7fuqmt84shqr6pf5g74usphpjydyy63kkjpctkn92asma0wx5",
+        "scriptPubKey": "5120f218c3715f2793c06d67ac2e01e829a23d5e40370c88d21351b5a41c2ed32abb"
+      },
+      "3": {
+        "address": "tb1p97zh65xd5unzv76uwkjp9rut0a9rgehqx3xds6dr82kn77f9drfs939d5j",
+        "scriptPubKey": "51202f857d50cda726267b5c75a4128f8b7f4a3466e0344cd869a33aad3f792568d3"
+      },
+      "4": {
+        "address": "tb1phapydm7v8cndgrc7u4mdm8ldtgy4stf8exhzd2z9qqdnycahch0qxp3fc0",
+        "scriptPubKey": "5120bf4246efcc3e26d40f1ee576dd9fed5a09582d27c9ae26a845001b3263b7c5de"
+      },
+      "5": {
+        "address": "tb1p5h535n38pnr5rvx39h0gutpghu2ecwh25yqpf3tvuefknku5ac7qhdj56u",
+        "scriptPubKey": "5120a5e91a4e270cc741b0d12dde8e2c28bf159c3aeaa10014c56ce65369db94ee3c"
+      },
+      "6": {
+        "address": "tb1pjr3vlemjz85emv9t87x4p6zfmc974hgqkpysyysjw4h2s86dmveqmr4vsk",
+        "scriptPubKey": "512090e2cfe77211e99db0ab3f8d50e849de0beadd00b049021212756ea81f4ddb32"
+      },
+      "7": {
+        "address": "tb1pj83uut68gwvm7cfg6g4p57a7q64t0455vjfjeennlqcmzgvw8dhsfdlqxt",
+        "scriptPubKey": "512091e3ce2f474399bf6128d22a1a7bbe06aab7d69464932ce673f831b1218e3b6f"
+      },
+      "8": {
+        "address": "tb1p6qd79us6mtmfaqa463u9aa5l66gdy5pql9wjwja36jtdt9x3ej0qse0swt",
+        "scriptPubKey": "5120d01be2f21adaf69e83b5d4785ef69fd690d25020f95d274bb1d496d594d1cc9e"
+      },
+      "9": {
+        "address": "tb1p4z2f8s4xhgtes6ytn65lrxhyhcs55ezllenst4qjezq8mlg443gqgvstuc",
+        "scriptPubKey": "5120a89493c2a6ba1798688b9ea9f19ae4be214a645ffe6705d412c8807dfd15ac50"
+      }
+    }
+  }
+}
