@@ -148,6 +148,16 @@ python3 tests/oracle/build_liana_v9_policy_rejections.py "$REF/policy-rejections
 cmp tests/fixtures/liana-v9-rust-policy-rejections.json "$REF/policy-rejections.json"
 ```
 
+`tests/fixtures/liana-v9-rust-taproot-duplicate-origin-same-path.json` is an additional parser-derived negative vector from the pinned `multisig-one-recovery` case. It changes only the origin fingerprint of the second primary xpub so that two distinct xpubs share one master fingerprint within the primary path; Rust parses the descriptor syntax and rejects it specifically as `DuplicateOriginSamePath`.
+
+```sh
+python3 tests/oracle/build_liana_v9_duplicate_origin_same_path_input.py tests/fixtures/liana-v9-rust-taproot-multisig.json "$REF/duplicate-origin-same-path.txt"
+cp tests/oracle/liana_v9_duplicate_origin_same_path.rs "$REF/liana/examples/liana_v9_duplicate_origin_same_path.rs"
+(cd "$REF" && cargo run --locked -p liana --example liana_v9_duplicate_origin_same_path -- "$REF/duplicate-origin-same-path.txt") > "$REF/duplicate-origin-same-path.tsv"
+python3 tests/oracle/build_liana_v9_duplicate_origin_same_path_fixture.py tests/fixtures/liana-v9-rust-taproot-multisig.json "$REF/duplicate-origin-same-path.txt" "$REF/duplicate-origin-same-path.tsv" "$REF/duplicate-origin-same-path.json"
+cmp tests/fixtures/liana-v9-rust-taproot-duplicate-origin-same-path.json "$REF/duplicate-origin-same-path.json"
+```
+
 These negative cases tighten the tested Taproot subset only; they do not make the TypeScript importer a complete Miniscript semantic analyzer.
 
 ## BIP32 CKDpub vector cross-check

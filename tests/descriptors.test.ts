@@ -39,6 +39,15 @@ const rustTaprootThreshRecoveryFixture = JSON.parse(readFileSync(resolve('tests/
   descriptor: string;
   expected: Record<'receive' | 'change', Record<string, { address: string; scriptPubKey: string }>>;
 };
+const rustTaprootDuplicateOriginFixture = JSON.parse(readFileSync(resolve('tests/fixtures/liana-v9-rust-taproot-duplicate-origin-same-path.json'), 'utf8')) as {
+  id: string;
+  provenance: { lianaCommit: string; miniscriptVersion: string; rustc: string; network: string; secretsOmitted: boolean };
+  sourceFixture: string;
+  sourceCase: string;
+  transformation: string;
+  expectedRejection: string;
+  descriptor: string;
+};
 const rustPolicyRejectionFixture = JSON.parse(readFileSync(resolve('tests/fixtures/liana-v9-rust-policy-rejections.json'), 'utf8')) as {
   provenance: { lianaCommit: string; miniscriptVersion: string; rustc: string; oracle: string };
   cases: Array<{ id: string; descriptor: string; expected: { accepted: boolean; error: string } }>;
@@ -279,6 +288,45 @@ describe('descriptor primitives', () => {
       }
     }
     expect(checked).toBe(20);
+  });
+  it('matches the pinned DuplicateOriginSamePath rejection when primary key origins repeat', () => {
+    expect(rustTaprootDuplicateOriginFixture.id).toBe('liana-v9-rust-taproot-duplicate-origin-same-path');
+    expect(rustTaprootDuplicateOriginFixture.provenance).toMatchObject({
+      lianaCommit: '398e622596e7530a328de3027cb2c09905f708c6',
+      miniscriptVersion: '11.2.0',
+      rustc: '1.80.0 (051478957 2024-07-21)',
+      network: 'mainnet',
+      secretsOmitted: true,
+    });
+    expect(rustTaprootDuplicateOriginFixture.sourceFixture).toBe('liana-v9-rust-taproot-multisig-vectors');
+    expect(rustTaprootDuplicateOriginFixture.sourceCase).toBe('multisig-one-recovery');
+    expect(rustTaprootDuplicateOriginFixture.expectedRejection).toBe('DuplicateOriginSamePath');
+    expect(rustTaprootDuplicateOriginFixture.transformation).toContain('only the primary multisig\'s second key origin fingerprint');
+
+    const source = rustMultisigFixture.cases.find((item) => item.id === rustTaprootDuplicateOriginFixture.sourceCase);
+    if (!source) throw new Error('expected pinned Rust source multisig case');
+    const sourceBody = splitDescriptorChecksum(source.descriptor).body;
+    const primaryStart = sourceBody.indexOf('multi_a(3,');
+    const primaryEnd = sourceBody.indexOf(')', primaryStart) + 1;
+    expect(primaryStart).toBeGreaterThan(0);
+    expect(primaryEnd).toBeGreaterThan(primaryStart);
+    const sourcePrimary = sourceBody.slice(primaryStart, primaryEnd);
+    const keys = sourcePrimary.slice('multi_a(3,'.length, -1).split(',');
+    expect(keys).toHaveLength(3);
+    expect(keys[0]).toMatch(/^\[4ba43603\]/);
+    expect(keys[1]).toMatch(/^\[8dfc9b34\]/);
+    expect(keys[0]!.slice('[4ba43603]'.length)).not.toBe(keys[1]!.slice('[8dfc9b34]'.length));
+    const changedKey = keys[1]!.replace(/^\[8dfc9b34\]/, '[4ba43603]');
+    expect(changedKey.slice('[4ba43603]'.length)).toBe(keys[1]!.slice('[8dfc9b34]'.length));
+    const candidatePrimary = `multi_a(3,${keys[0]},${changedKey},${keys[2]})`;
+    const candidateBody = sourceBody.replace(sourcePrimary, candidatePrimary);
+    expect(candidateBody.replace(candidatePrimary, sourcePrimary)).toBe(sourceBody);
+    expect(candidateBody).toContain('and_v(v:multi_a(2,');
+    expect(rustTaprootDuplicateOriginFixture.descriptor).toBe(descriptorWithBody(candidateBody));
+
+    expect(() => parseLianaDescriptor(rustTaprootDuplicateOriginFixture.descriptor, 'mainnet')).toThrowError(
+      expect.objectContaining({ code: 'INVALID_DESCRIPTOR', message: expect.stringContaining('duplicate master-fingerprint origins') }),
+    );
   });
   it('rejects Taproot recovery paths with a hashlock despite a valid older() condition', () => {
     expect(rustPolicyRejectionFixture.provenance).toMatchObject({ lianaCommit: '398e622596e7530a328de3027cb2c09905f708c6', miniscriptVersion: '11.2.0', rustc: '1.80.0 (051478957 2024-07-21)' });
