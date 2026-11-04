@@ -27,6 +27,13 @@ const rustSignetSinglePrimaryFixture = JSON.parse(readFileSync(resolve('tests/fi
   provenance: { lianaCommit: string; miniscriptVersion: string; network: string };
   multipathDescriptorBody: string;
 };
+const rustSignetSingleKeyMultiAFixture = JSON.parse(readFileSync(resolve('tests/fixtures/liana-v9-rust-signet-single-key-multi-a.json'), 'utf8')) as {
+  provenance: { lianaCommit: string; miniscriptVersion: string; network: string; rustc: string };
+  transformation: string;
+  inferredPolicy: { primary: string; recovery: { older: number; path: string } };
+  descriptor: string;
+  expected: Record<'receive' | 'change', Record<string, { address: string; scriptPubKey: string }>>;
+};
 
 const legacyWshFixture = JSON.parse(readFileSync(resolve('tests/fixtures/liana-v9-rust-legacy-wsh.json'), 'utf8')) as {
   provenance: { lianaCommit: string; miniscriptVersion: string; network: string };
@@ -183,6 +190,52 @@ describe('descriptor primitives', () => {
     expect(malformedBody.slice(recoveryStart)).toContain('/0/*');
     expect(malformedBody.slice(recoveryStart)).not.toContain('/<0;1>/*');
     expect(() => parseLianaDescriptor(descriptorWithBody(malformedBody), 'signet')).toThrowError(expect.objectContaining({ code: 'INVALID_DESCRIPTOR' }));
+  });
+  it('rejects duplicate xpub derivation identity across primary and recovery paths despite different fingerprints', () => {
+    const body = rustSignetSinglePrimaryFixture.multipathDescriptorBody;
+    const multipathSuffix = '/<0;1>/*';
+    const internalStart = body.indexOf('[');
+    const internalEnd = body.indexOf(multipathSuffix, internalStart) + multipathSuffix.length;
+    const recoveryStart = body.indexOf('and_v(');
+    const recoveryKeyStart = body.indexOf('[', recoveryStart);
+    const recoveryKeyEnd = body.indexOf(multipathSuffix, recoveryKeyStart) + multipathSuffix.length;
+    expect(internalEnd).toBeGreaterThan(internalStart);
+    expect(recoveryKeyEnd).toBeGreaterThan(recoveryKeyStart);
+    const internalKey = body.slice(internalStart, internalEnd);
+    const duplicateRecoveryKey = internalKey.replace(/^\[([0-9a-fA-F]{8})/, '[deadbeef');
+    const malformedBody = `${body.slice(0, recoveryKeyStart)}${duplicateRecoveryKey}${body.slice(recoveryKeyEnd)}`;
+    expect(duplicateRecoveryKey).not.toBe(internalKey);
+    expect(duplicateRecoveryKey.slice(9)).toBe(internalKey.slice(9));
+    expect(() => parseLianaDescriptor(descriptorWithBody(malformedBody), 'signet')).toThrowError(expect.objectContaining({ code: 'INVALID_DESCRIPTOR' }));
+  });
+  it('matches the pinned Liana Rust vector for a single-key multi_a recovery', () => {
+    expect(rustSignetSingleKeyMultiAFixture.provenance).toMatchObject({
+      lianaCommit: '398e622596e7530a328de3027cb2c09905f708c6',
+      miniscriptVersion: '11.2.0',
+      network: 'signet',
+      rustc: '1.80.0 (051478957 2024-07-21)',
+    });
+    expect(rustSignetSingleKeyMultiAFixture.inferredPolicy).toEqual({
+      primary: 'PathInfo::Single',
+      recovery: { older: 36, path: 'PathInfo::Single' },
+    });
+    expect(rustSignetSingleKeyMultiAFixture.transformation).toContain('v:pk(key) -> v:multi_a(1,key)');
+    const wallet = parseLianaDescriptor(rustSignetSingleKeyMultiAFixture.descriptor, 'signet');
+    const body = splitDescriptorChecksum(rustSignetSingleKeyMultiAFixture.descriptor).body;
+    expect(wallet.original).toBe(rustSignetSingleKeyMultiAFixture.descriptor);
+    expect(wallet.ast.source).toBe(body);
+    expect(body).toContain('v:multi_a(1,');
+    let checked = 0;
+    for (const branch of ['receive', 'change'] as const) {
+      for (let index = 0; index < 10; index++) {
+        const actual = deriveWalletAddress(wallet, branch, index);
+        const expected = rustSignetSingleKeyMultiAFixture.expected[branch][String(index)]!;
+        expect(actual.address, `${branch}/${index} address`).toBe(expected.address);
+        expect(Buffer.from(actual.scriptPubKey).toString('hex'), `${branch}/${index} scriptPubKey`).toBe(expected.scriptPubKey);
+        checked++;
+      }
+    }
+    expect(checked).toBe(20);
   });
   it('continues to import the fixed-branch community receive/change descriptors', () => {
     expect(parseLianaDescriptor(fixture.receive.descriptor, 'signet').network).toBe('signet');

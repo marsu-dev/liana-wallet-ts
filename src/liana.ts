@@ -161,7 +161,7 @@ function isLianaTaprootKeyPolicy(expression: string, requireMultipath: boolean):
   if (call?.name === 'pk') return call.args.length === 1 && isSignerKey(call.args[0]!);
   if (call?.name === 'multi_a') {
     const threshold = call.args[0]!;
-    return call.args.length >= 3 && isDecimalToken(threshold) && Number(threshold) >= 1 && Number(threshold) <= call.args.length - 1 && call.args.slice(1).every(isSignerKey);
+    return call.args.length >= 2 && isDecimalToken(threshold) && Number(threshold) >= 1 && Number(threshold) <= call.args.length - 1 && call.args.slice(1).every(isSignerKey);
   }
   return false;
 }
