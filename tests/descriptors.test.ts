@@ -40,6 +40,12 @@ const rustSignetDuplicateXpubFixture = JSON.parse(readFileSync(resolve('tests/fi
   expectedRejection: string;
   descriptor: string;
 };
+const rustSignetFixedBranchRecoveryFixture = JSON.parse(readFileSync(resolve('tests/fixtures/liana-v9-rust-signet-fixed-branch-recovery.json'), 'utf8')) as {
+  provenance: { sourceFixture: string; lianaCommit: string; miniscriptVersion: string; network: string; rustc: string };
+  transformation: string;
+  expectedRejection: string;
+  descriptor: string;
+};
 
 const legacyWshFixture = JSON.parse(readFileSync(resolve('tests/fixtures/liana-v9-rust-legacy-wsh.json'), 'utf8')) as {
   provenance: { lianaCommit: string; miniscriptVersion: string; network: string };
@@ -185,17 +191,29 @@ describe('descriptor primitives', () => {
     expect(body).toContain('/<0;1>/*');
     expect(() => parseLianaDescriptor(malformed, 'signet')).toThrowError(expect.objectContaining({ code: 'INVALID_DESCRIPTOR' }));
   });
-  it('rejects a fixed-branch recovery signer inside a multipath Taproot descriptor', () => {
-    const body = rustSignetSinglePrimaryFixture.multipathDescriptorBody;
-    const recoveryStart = body.indexOf('and_v(');
-    const recoveryBranch = body.indexOf('/<0;1>/*', recoveryStart);
+  it('matches the pinned IncompatibleDesc rejection for a fixed-branch recovery signer', () => {
+    expect(rustSignetFixedBranchRecoveryFixture.provenance).toMatchObject({
+      sourceFixture: 'liana-v9-rust-signet-single-primary-recovery-vectors',
+      lianaCommit: '398e622596e7530a328de3027cb2c09905f708c6',
+      miniscriptVersion: '11.2.0',
+      network: 'signet',
+      rustc: '1.80.0 (051478957 2024-07-21)',
+    });
+    expect(rustSignetFixedBranchRecoveryFixture.expectedRejection).toBe('IncompatibleDesc');
+    expect(rustSignetFixedBranchRecoveryFixture.transformation).toContain('internal primary remains /<0;1>/*');
+    const body = splitDescriptorChecksum(rustSignetFixedBranchRecoveryFixture.descriptor).body;
+    const sourceBody = rustSignetSinglePrimaryFixture.multipathDescriptorBody;
+    const recoveryStart = sourceBody.indexOf('and_v(');
+    const recoveryBranch = sourceBody.indexOf('/<0;1>/*', recoveryStart);
     expect(recoveryStart).toBeGreaterThan(0);
     expect(recoveryBranch).toBeGreaterThan(recoveryStart);
-    const malformedBody = `${body.slice(0, recoveryBranch)}/0/*${body.slice(recoveryBranch + '/<0;1>/*'.length)}`;
+    const malformedBody = `${sourceBody.slice(0, recoveryBranch)}/0/*${sourceBody.slice(recoveryBranch + '/<0;1>/*'.length)}`;
+    expect(body.slice(0, recoveryStart)).toBe(sourceBody.slice(0, recoveryStart));
     expect(body.slice(0, recoveryStart)).toContain('/<0;1>/*');
-    expect(malformedBody.slice(recoveryStart)).toContain('/0/*');
-    expect(malformedBody.slice(recoveryStart)).not.toContain('/<0;1>/*');
-    expect(() => parseLianaDescriptor(descriptorWithBody(malformedBody), 'signet')).toThrowError(expect.objectContaining({ code: 'INVALID_DESCRIPTOR' }));
+    expect(body.slice(recoveryStart)).toContain('/0/*');
+    expect(body.slice(recoveryStart)).not.toContain('/<0;1>/*');
+    expect(rustSignetFixedBranchRecoveryFixture.descriptor).toBe(descriptorWithBody(malformedBody));
+    expect(() => parseLianaDescriptor(rustSignetFixedBranchRecoveryFixture.descriptor, 'signet')).toThrowError(expect.objectContaining({ code: 'INVALID_DESCRIPTOR' }));
   });
   it('matches the pinned DuplicateKey rejection when origin fingerprints differ', () => {
     expect(rustSignetDuplicateXpubFixture.provenance).toMatchObject({

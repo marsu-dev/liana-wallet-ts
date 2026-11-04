@@ -85,6 +85,16 @@ python3 tests/oracle/build_liana_v9_signet_duplicate_xpub_fixture.py tests/fixtu
 cmp tests/fixtures/liana-v9-rust-signet-duplicate-xpub.json "$REF/signet-duplicate-xpub.json"
 ```
 
+The `liana-v9-rust-signet-fixed-branch-recovery.json` negative fixture changes only the recovery signer from `/<0;1>/*` to `/0/*`; it deliberately keeps the spendable internal primary multipath. Pinned Liana rejects the syntactically valid candidate as `LianaPolicyError::IncompatibleDesc`. The distinct internal-key-flattened source-derived test is not the candidate described here and remains without a saved Rust fixture.
+
+```sh
+python3 tests/oracle/build_liana_v9_signet_fixed_branch_recovery_input.py tests/fixtures/liana-v9-rust-signet-single-primary-recovery.json "$REF/signet-fixed-branch-recovery.txt"
+cp tests/oracle/liana_v9_signet_fixed_branch_recovery.rs "$REF/liana/examples/liana_v9_signet_fixed_branch_recovery.rs"
+(cd "$REF" && cargo run --locked -p liana --example liana_v9_signet_fixed_branch_recovery -- "$REF/signet-fixed-branch-recovery.txt") > "$REF/signet-fixed-branch-recovery.tsv"
+python3 tests/oracle/build_liana_v9_signet_fixed_branch_recovery_fixture.py tests/fixtures/liana-v9-rust-signet-single-primary-recovery.json "$REF/signet-fixed-branch-recovery.txt" "$REF/signet-fixed-branch-recovery.tsv" "$REF/signet-fixed-branch-recovery.json"
+cmp tests/fixtures/liana-v9-rust-signet-fixed-branch-recovery.json "$REF/signet-fixed-branch-recovery.json"
+```
+
 The parser handles the tested Liana P2WSH `or_d` single-recovery, nested `or_i` multi-recovery, `andor(recovery, older(n), primary)`, and direct key-only `thresh` recovery policies; each recovery uses a key-only policy and a distinct positive decimal timelock. The `andor` and threshold fixtures' primary/recovery mappings are asserted by pinned Rust `LianaDescriptor::from_str`, not inferred from TypeScript. The Rust harness also confirms rejection of the nested B-type threshold candidate exercised by the TypeScript negative test. Coverage includes five mainnet P2WSH shapes and one exact pinned Signet descriptor, not every Miniscript/Liana form or broad network parity. Accepted descriptors include a lossless syntax AST with raw source spans; the AST is not complete Miniscript semantic validation. Other networks and broader grammar parity remain unverified. No general Liana compatibility claim is made.
 
 ## Pinned semantic rejection vectors
