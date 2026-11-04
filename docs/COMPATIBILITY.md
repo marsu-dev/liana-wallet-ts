@@ -48,6 +48,12 @@ The TypeScript Taproot importer now lifts the descriptor AST into a deliberately
 
 The pinned semantic set now contains ten negative cases (two hashlocks, one `DuplicateKey`, three `DuplicateOriginSamePath`, and four `IncompatibleDesc`) and six positive parser-derived cases. The four new primary-path candidates add two accepted mappings and two exact Rust rejections, but no address/script pairs. The importer is not a complete `SemanticPolicy`/Miniscript implementation: other combinators, recovery normalizations, origin/path combinations, internal-key forms, and networks require their own Rust oracle vectors before being supported or claimed compatible. The 184 Rust address/script pairs and 64 third-party-library pairs remain unchanged and do not prove general Liana parity.
 
+## Phase 6 release verification
+
+The `liana-wallet-ts@0.1.0` package is an experimental watch-only release candidate, not a claim of full Liana or Miniscript compatibility. The compatibility baseline is pinned to Liana v9.0 commit `398e622596e7530a328de3027cb2c09905f708c6`, Miniscript `11.2.0` from its lockfile, and Rust `1.80.0`. The supported policy and network shapes are only those enumerated in the sections above; unsupported semantics must be rejected rather than approximated.
+
+Final local checks use a clean `npm ci`, the complete unit/oracle/negative suite, TypeScript typecheck and build, dependency audit, and a packed-consumer smoke test. The packed CLI is installed into a separate consumer directory and checked against an exact Signet address and `scriptPubKey`; the ESM package exports are also loaded from that install. These checks establish reproducibility for the listed vectors, not behavior for unlisted policies or networks. No registry publish or remote push is part of this verification; the annotated `v0.1.0` tag remains local until deliberately pushed.
+
 ## Validation requirements
 
 - Verify the stored descriptor checksums before using fixtures.
