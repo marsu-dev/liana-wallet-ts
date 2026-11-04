@@ -125,7 +125,7 @@ python3 tests/oracle/build_liana_v9_signet_duplicate_xpub_fixture.py tests/fixtu
 cmp tests/fixtures/liana-v9-rust-signet-duplicate-xpub.json "$REF/signet-duplicate-xpub.json"
 ```
 
-The `liana-v9-rust-signet-fixed-branch-recovery.json` negative fixture changes only the recovery signer from `/<0;1>/*` to `/0/*`; it deliberately keeps the spendable internal primary multipath. Pinned Liana rejects the syntactically valid candidate as `LianaPolicyError::IncompatibleDesc`. The distinct internal-key-flattened source-derived test is not the candidate described here and remains without a saved Rust fixture.
+The `liana-v9-rust-signet-fixed-branch-recovery.json` negative fixture changes only the recovery signer from `/<0;1>/*` to `/0/*`; it deliberately keeps the spendable internal primary multipath. Pinned Liana rejects the syntactically valid candidate as `LianaPolicyError::IncompatibleDesc`. The distinct flattened-internal-key candidate, with the internal primary fixed and recovery still multipath, is recorded separately in `liana-v9-rust-signet-flattened-internal-key-rejection.json`.
 
 ```sh
 python3 tests/oracle/build_liana_v9_signet_fixed_branch_recovery_input.py tests/fixtures/liana-v9-rust-signet-single-primary-recovery.json "$REF/signet-fixed-branch-recovery.txt"
@@ -166,6 +166,16 @@ cp tests/oracle/liana_v9_duplicate_origin_recovery.rs "$REF/liana/examples/liana
 (cd "$REF" && cargo run --locked -p liana --example liana_v9_duplicate_origin_recovery -- "$REF/duplicate-origin-recovery-same-path.txt") > "$REF/duplicate-origin-recovery-same-path.tsv"
 python3 tests/oracle/build_liana_v9_duplicate_origin_recovery_fixture.py tests/fixtures/liana-v9-rust-taproot-multisig.json "$REF/duplicate-origin-recovery-same-path.txt" "$REF/duplicate-origin-recovery-same-path.tsv" "$REF/duplicate-origin-recovery-same-path.json"
 cmp tests/fixtures/liana-v9-rust-taproot-duplicate-origin-recovery-same-path.json "$REF/duplicate-origin-recovery-same-path.json"
+```
+
+`tests/fixtures/liana-v9-rust-signet-flattened-internal-key-rejection.json` upgrades the earlier source-derived negative to a pinned parser-derived vector. It changes only the spendable internal primary key from `/<0;1>/*` to `/0/*`, leaving recovery multipath; pinned Liana parses the descriptor syntax and rejects the policy as `IncompatibleDesc`.
+
+```sh
+python3 tests/oracle/build_liana_v9_signet_flattened_internal_key_input.py tests/fixtures/liana-v9-rust-signet-single-primary-recovery.json "$REF/flattened-internal-key.txt"
+cp tests/oracle/liana_v9_signet_flattened_internal_key.rs "$REF/liana/examples/liana_v9_signet_flattened_internal_key.rs"
+(cd "$REF" && cargo run --locked -p liana --example liana_v9_signet_flattened_internal_key -- "$REF/flattened-internal-key.txt") > "$REF/flattened-internal-key.tsv"
+python3 tests/oracle/build_liana_v9_signet_flattened_internal_key_fixture.py tests/fixtures/liana-v9-rust-signet-single-primary-recovery.json "$REF/flattened-internal-key.txt" "$REF/flattened-internal-key.tsv" "$REF/flattened-internal-key.json"
+cmp tests/fixtures/liana-v9-rust-signet-flattened-internal-key-rejection.json "$REF/flattened-internal-key.json"
 ```
 
 These negative cases tighten the tested Taproot subset only; they do not make the TypeScript importer a complete Miniscript semantic analyzer.

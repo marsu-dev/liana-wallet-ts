@@ -1,0 +1,18 @@
+{
+  "id": "liana-v9-rust-signet-flattened-internal-key-rejection",
+  "provenance": {
+    "lianaVersion": "9.0.0",
+    "lianaCommit": "398e622596e7530a328de3027cb2c09905f708c6",
+    "miniscriptVersion": "11.2.0",
+    "rustc": "1.80.0 (051478957 2024-07-21)",
+    "cargoLock": "Liana repository Cargo.lock at the pinned commit",
+    "network": "signet",
+    "extendedKeySerialization": "tpub (Network::Testnet); descriptor context and addresses are Signet",
+    "generator": "Pinned LianaDescriptor::from_str on the valid-checksum Signet descriptor; exact Liana policy rejection emitted by the Rust harness",
+    "secretsOmitted": true
+  },
+  "sourceFixture": "liana-v9-rust-signet-single-primary-recovery-vectors",
+  "transformation": "Change only the spendable internal primary key branch from /<0;1>/* to /0/*; the recovery signer remains on /<0;1>/*.",
+  "expectedRejection": "IncompatibleDesc",
+  "descriptor": "tr([07fd816d/48'/1'/0'/2']tpubDDvFWduSiwhW7hUbL1oMyUfcNgeSyZgHbooe1WjHyRaXYH3uUjm1xdxWXAGbQFn8QGScDg4b4a6WMGNiEAq2uQdmPDhDKPE5Dr8DX24mwd5/0/*,and_v(v:pk([da855a1f/48'/1'/0'/2']tpubDEHRt73d4guqR5BLGQud4XMW8vDCGHUj54qDTFtsdFstF6PAYx1oAy3jfKg1PffqLUWuSsXmnetKeTJFKfKLXeJR97yUuqvvojnoBcUDHg5/<0;1>/*),older(36)))#snkry303"
+}

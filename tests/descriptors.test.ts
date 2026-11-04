@@ -78,6 +78,14 @@ const rustSignetDuplicateXpubFixture = JSON.parse(readFileSync(resolve('tests/fi
   expectedRejection: string;
   descriptor: string;
 };
+const rustSignetFlattenedInternalKeyFixture = JSON.parse(readFileSync(resolve('tests/fixtures/liana-v9-rust-signet-flattened-internal-key-rejection.json'), 'utf8')) as {
+  id: string;
+  provenance: { lianaCommit: string; miniscriptVersion: string; rustc: string; network: string; secretsOmitted: boolean };
+  sourceFixture: string;
+  transformation: string;
+  expectedRejection: string;
+  descriptor: string;
+};
 const rustSignetFixedBranchRecoveryFixture = JSON.parse(readFileSync(resolve('tests/fixtures/liana-v9-rust-signet-fixed-branch-recovery.json'), 'utf8')) as {
   provenance: { sourceFixture: string; lianaCommit: string; miniscriptVersion: string; network: string; rustc: string };
   transformation: string;
@@ -393,17 +401,38 @@ describe('descriptor primitives', () => {
     expect(item.expected.accepted).toBe(false);
     expect(() => parseLianaDescriptor(item.descriptor, 'mainnet')).toThrowError(expect.objectContaining({ code: 'INVALID_DESCRIPTOR' }));
   });
-  it('rejects a spendable Taproot internal key flattened while recovery remains multipath', () => {
-    expect(rustSignetSinglePrimaryFixture.provenance).toMatchObject({
+  it('matches the pinned IncompatibleDesc rejection when the internal primary is flattened', () => {
+    expect(rustSignetFlattenedInternalKeyFixture.id).toBe('liana-v9-rust-signet-flattened-internal-key-rejection');
+    expect(rustSignetFlattenedInternalKeyFixture.provenance).toMatchObject({
       lianaCommit: '398e622596e7530a328de3027cb2c09905f708c6',
       miniscriptVersion: '11.2.0',
+      rustc: '1.80.0 (051478957 2024-07-21)',
       network: 'signet',
+      secretsOmitted: true,
     });
-    const body = rustSignetSinglePrimaryFixture.multipathDescriptorBody.replace('/<0;1>/*', '/0/*');
-    const malformed = descriptorWithBody(body);
-    expect(body).toContain('/0/*');
-    expect(body).toContain('/<0;1>/*');
-    expect(() => parseLianaDescriptor(malformed, 'signet')).toThrowError(expect.objectContaining({ code: 'INVALID_DESCRIPTOR' }));
+    expect(rustSignetFlattenedInternalKeyFixture.sourceFixture).toBe('liana-v9-rust-signet-single-primary-recovery-vectors');
+    expect(rustSignetFlattenedInternalKeyFixture.expectedRejection).toBe('IncompatibleDesc');
+    expect(rustSignetFlattenedInternalKeyFixture.transformation).toContain('only the spendable internal primary key branch');
+
+    const sourceBody = rustSignetSinglePrimaryFixture.multipathDescriptorBody;
+    const recoveryStart = sourceBody.indexOf('and_v(');
+    const internalBranch = sourceBody.indexOf('/<0;1>/*');
+    expect(recoveryStart).toBeGreaterThan(0);
+    expect(internalBranch).toBeGreaterThanOrEqual(0);
+    expect(internalBranch).toBeLessThan(recoveryStart);
+    const candidateBody = `${sourceBody.slice(0, internalBranch)}/0/*${sourceBody.slice(internalBranch + '/<0;1>/*'.length)}`;
+    expect(candidateBody.replace('/0/*', '/<0;1>/*')).toBe(sourceBody);
+    const candidateRecoveryStart = candidateBody.indexOf('and_v(');
+    expect(candidateBody.slice(candidateRecoveryStart)).toBe(sourceBody.slice(recoveryStart));
+    expect(candidateBody.slice(0, candidateRecoveryStart)).toContain('/0/*');
+    expect(candidateBody.slice(candidateRecoveryStart)).toContain('/<0;1>/*');
+    expect(rustSignetFlattenedInternalKeyFixture.descriptor).toBe(descriptorWithBody(candidateBody));
+    expect(() => parseLianaDescriptor(rustSignetFlattenedInternalKeyFixture.descriptor, 'signet')).toThrowError(
+      expect.objectContaining({
+        code: 'INVALID_DESCRIPTOR',
+        message: 'A spendable Liana Taproot internal key must be an originated multipath xpub with two normal derivation choices and an unhardened wildcard',
+      }),
+    );
   });
   it('matches the pinned IncompatibleDesc rejection for a fixed-branch recovery signer', () => {
     expect(rustSignetFixedBranchRecoveryFixture.provenance).toMatchObject({
