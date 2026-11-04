@@ -69,7 +69,7 @@ function validateLianaTaprootPolicy(body: string): void {
       ? recovery.args[0]!.slice(2)
       : '';
     const older = recovery?.name === 'and_v' && recovery.args.length === 2 ? descriptorCall(recovery.args[1]!) : undefined;
-    if (!isLianaTaprootKeyPolicy(keyExpression, hasMultipath) || older?.name !== 'older' || older.args.length !== 1 || !isDecimalToken(older.args[0]!)) {
+    if (!isLianaTaprootKeyPolicy(keyExpression, hasMultipath, true) || older?.name !== 'older' || older.args.length !== 1 || !isDecimalToken(older.args[0]!)) {
       throw new WalletDerivationError('INVALID_DESCRIPTOR', 'Liana Taproot recovery paths must combine a key-only signer policy with exactly one older() timelock');
     }
     if (recoveryTimelocks.has(timelock)) throw new WalletDerivationError('INVALID_DESCRIPTOR', 'Liana recovery paths must have distinct relative timelocks');
