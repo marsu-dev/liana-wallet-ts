@@ -86,6 +86,14 @@ const rustSignetFlattenedInternalKeyFixture = JSON.parse(readFileSync(resolve('t
   expectedRejection: string;
   descriptor: string;
 };
+const rustSignetInternalPrimaryLeafDuplicateOriginFixture = JSON.parse(readFileSync(resolve('tests/fixtures/liana-v9-rust-signet-internal-primary-leaf-duplicate-origin.json'), 'utf8')) as {
+  id: string;
+  provenance: { lianaCommit: string; miniscriptVersion: string; rustc: string; network: string; secretsOmitted: boolean };
+  sourceFixture: string;
+  transformation: string;
+  expectedRejection: string;
+  descriptor: string;
+};
 const rustSignetFixedBranchRecoveryFixture = JSON.parse(readFileSync(resolve('tests/fixtures/liana-v9-rust-signet-fixed-branch-recovery.json'), 'utf8')) as {
   provenance: { sourceFixture: string; lianaCommit: string; miniscriptVersion: string; network: string; rustc: string };
   transformation: string;
@@ -385,6 +393,43 @@ describe('descriptor primitives', () => {
 
     expect(() => parseLianaDescriptor(rustTaprootDuplicateOriginRecoveryFixture.descriptor, 'mainnet')).toThrowError(
       expect.objectContaining({ code: 'INVALID_DESCRIPTOR', message: expect.stringContaining('recovery path contains duplicate master-fingerprint origins') }),
+    );
+  });
+  it('matches DuplicateOriginSamePath across internal primary and primary leaf keys', () => {
+    expect(rustSignetInternalPrimaryLeafDuplicateOriginFixture.id).toBe('liana-v9-rust-signet-internal-primary-leaf-duplicate-origin');
+    expect(rustSignetInternalPrimaryLeafDuplicateOriginFixture.provenance).toMatchObject({
+      lianaCommit: '398e622596e7530a328de3027cb2c09905f708c6',
+      miniscriptVersion: '11.2.0',
+      rustc: '1.80.0 (051478957 2024-07-21)',
+      network: 'signet',
+      secretsOmitted: true,
+    });
+    expect(rustSignetInternalPrimaryLeafDuplicateOriginFixture.sourceFixture).toBe('liana-v9-rust-signet-single-primary-recovery-vectors');
+    expect(rustSignetInternalPrimaryLeafDuplicateOriginFixture.expectedRejection).toBe('DuplicateOriginSamePath');
+    expect(rustSignetInternalPrimaryLeafDuplicateOriginFixture.transformation).toContain('change only its origin fingerprint to match the distinct spendable internal primary xpub');
+
+    const sourceBody = rustSignetSinglePrimaryFixture.multipathDescriptorBody;
+    const internalStart = sourceBody.indexOf('tr(') + 'tr('.length;
+    const internalEnd = sourceBody.indexOf(',', internalStart);
+    const internal = sourceBody.slice(internalStart, internalEnd);
+    const recovery = sourceBody.slice(internalEnd + 1, -1);
+    expect(internal).toMatch(/^\[07fd816d\//);
+    expect(recovery).toMatch(/^and_v\(v:pk\(\[da855a1f\//);
+    const recoveryKey = recovery.slice('and_v(v:pk('.length, -'),older(36))'.length);
+    const primaryKey = recoveryKey
+      .replace(/^\[da855a1f\//, '[07fd816d/')
+      .replace('/<0;1>/*', '/0/<0;1>/*');
+    expect(primaryKey.replace('/0/<0;1>/*', '/<0;1>/*').replace(/^\[07fd816d\//, '[da855a1f/')).toBe(recoveryKey);
+    const primaryXpub = primaryKey.slice(primaryKey.indexOf(']') + 1).split('/')[0];
+    const recoveryXpub = recoveryKey.slice(recoveryKey.indexOf(']') + 1).split('/')[0];
+    const internalXpub = internal.slice(internal.indexOf(']') + 1).split('/')[0];
+    expect(primaryXpub).toBe(recoveryXpub);
+    expect(primaryXpub).not.toBe(internalXpub);
+    const candidateBody = `tr(${internal},{pk(${primaryKey}),${recovery}})`;
+    expect(candidateBody.replace(`{pk(${primaryKey}),`, '').replace('}', '')).toBe(sourceBody);
+    expect(rustSignetInternalPrimaryLeafDuplicateOriginFixture.descriptor).toBe(descriptorWithBody(candidateBody));
+    expect(() => parseLianaDescriptor(rustSignetInternalPrimaryLeafDuplicateOriginFixture.descriptor, 'signet')).toThrowError(
+      expect.objectContaining({ code: 'INVALID_DESCRIPTOR', message: 'Liana primary path contains duplicate master-fingerprint origins' }),
     );
   });
   it('rejects Taproot recovery paths with a hashlock despite a valid older() condition', () => {

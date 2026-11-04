@@ -178,6 +178,18 @@ python3 tests/oracle/build_liana_v9_signet_flattened_internal_key_fixture.py tes
 cmp tests/fixtures/liana-v9-rust-signet-flattened-internal-key-rejection.json "$REF/flattened-internal-key.json"
 ```
 
+The reproduction commands below assume `$REF` is the root of the pinned Liana checkout created in the `Reproduce` section above; the harness is copied to that checkout's `liana/examples` directory.
+
+`liana-v9-rust-signet-internal-primary-leaf-duplicate-origin.json` is a separate parser-derived negative. It adds a primary `pk` leaf reusing the recovery xpub but changing only its origin fingerprint to match the distinct spendable internal primary xpub; Liana rejects this combined primary path specifically as `DuplicateOriginSamePath`. The candidate has no derived output pairs and does not widen the supported policy grammar.
+
+```sh
+python3 tests/oracle/build_liana_v9_taproot_internal_primary_origin_input.py tests/fixtures/liana-v9-rust-signet-single-primary-recovery.json "$REF/internal-primary-origin.txt"
+cp tests/oracle/liana_v9_taproot_internal_primary_origin.rs "$REF/liana/examples/liana_v9_taproot_internal_primary_origin.rs"
+(cd "$REF" && cargo run --locked -p liana --example liana_v9_taproot_internal_primary_origin -- "$REF/internal-primary-origin.txt") > "$REF/internal-primary-origin.tsv"
+python3 tests/oracle/build_liana_v9_taproot_internal_primary_origin_fixture.py tests/fixtures/liana-v9-rust-signet-single-primary-recovery.json "$REF/internal-primary-origin.txt" "$REF/internal-primary-origin.tsv" "$REF/internal-primary-origin.json"
+cmp tests/fixtures/liana-v9-rust-signet-internal-primary-leaf-duplicate-origin.json "$REF/internal-primary-origin.json"
+```
+
 These negative cases tighten the tested Taproot subset only; they do not make the TypeScript importer a complete Miniscript semantic analyzer.
 
 ## BIP32 CKDpub vector cross-check

@@ -1,0 +1,18 @@
+{
+  "id": "liana-v9-rust-signet-internal-primary-leaf-duplicate-origin",
+  "provenance": {
+    "lianaVersion": "9.0.0",
+    "lianaCommit": "398e622596e7530a328de3027cb2c09905f708c6",
+    "miniscriptVersion": "11.2.0",
+    "rustc": "1.80.0 (051478957 2024-07-21)",
+    "cargoLock": "Liana repository Cargo.lock at the pinned commit",
+    "network": "signet",
+    "extendedKeySerialization": "tpub (Network::Testnet); descriptor context and addresses are Signet",
+    "generator": "Pinned LianaDescriptor::from_str on the exact parser-derived candidate; policy error emitted by the Rust harness",
+    "secretsOmitted": true
+  },
+  "sourceFixture": "liana-v9-rust-signet-single-primary-recovery-vectors",
+  "transformation": "Add one primary pk leaf using the recovery xpub at /0/<0;1>/* and change only its origin fingerprint to match the distinct spendable internal primary xpub; retain the original recovery leaf unchanged.",
+  "expectedRejection": "DuplicateOriginSamePath",
+  "descriptor": "tr([07fd816d/48'/1'/0'/2']tpubDDvFWduSiwhW7hUbL1oMyUfcNgeSyZgHbooe1WjHyRaXYH3uUjm1xdxWXAGbQFn8QGScDg4b4a6WMGNiEAq2uQdmPDhDKPE5Dr8DX24mwd5/<0;1>/*,{pk([07fd816d/48'/1'/0'/2']tpubDEHRt73d4guqR5BLGQud4XMW8vDCGHUj54qDTFtsdFstF6PAYx1oAy3jfKg1PffqLUWuSsXmnetKeTJFKfKLXeJR97yUuqvvojnoBcUDHg5/0/<0;1>/*),and_v(v:pk([da855a1f/48'/1'/0'/2']tpubDEHRt73d4guqR5BLGQud4XMW8vDCGHUj54qDTFtsdFstF6PAYx1oAy3jfKg1PffqLUWuSsXmnetKeTJFKfKLXeJR97yUuqvvojnoBcUDHg5/<0;1>/*),older(36))})#vmgtmh6c"
+}
