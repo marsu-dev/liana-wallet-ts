@@ -75,6 +75,16 @@ python3 tests/oracle/build_liana_v9_signet_single_key_multi_a_fixture.py tests/f
 cmp tests/fixtures/liana-v9-rust-signet-single-key-multi-a.json "$REF/signet-single-key-multi-a.json"
 ```
 
+The negative `liana-v9-rust-signet-duplicate-xpub.json` fixture checks the duplicate identity rule across the spendable internal primary key and recovery signer. It preserves the same xpub and derivation paths but changes the origin fingerprint; the Rust harness first parses the descriptor syntax, then asserts the exact Liana policy error is `DuplicateKey`.
+
+```sh
+python3 tests/oracle/build_liana_v9_signet_duplicate_xpub_input.py tests/fixtures/liana-v9-rust-signet-single-primary-recovery.json "$REF/signet-duplicate-xpub.txt"
+cp tests/oracle/liana_v9_signet_duplicate_xpub.rs "$REF/liana/examples/liana_v9_signet_duplicate_xpub.rs"
+(cd "$REF" && cargo run --locked -p liana --example liana_v9_signet_duplicate_xpub -- "$REF/signet-duplicate-xpub.txt") > "$REF/signet-duplicate-xpub.tsv"
+python3 tests/oracle/build_liana_v9_signet_duplicate_xpub_fixture.py tests/fixtures/liana-v9-rust-signet-single-primary-recovery.json "$REF/signet-duplicate-xpub.txt" "$REF/signet-duplicate-xpub.tsv" "$REF/signet-duplicate-xpub.json"
+cmp tests/fixtures/liana-v9-rust-signet-duplicate-xpub.json "$REF/signet-duplicate-xpub.json"
+```
+
 The parser handles the tested Liana P2WSH `or_d` single-recovery, nested `or_i` multi-recovery, `andor(recovery, older(n), primary)`, and direct key-only `thresh` recovery policies; each recovery uses a key-only policy and a distinct positive decimal timelock. The `andor` and threshold fixtures' primary/recovery mappings are asserted by pinned Rust `LianaDescriptor::from_str`, not inferred from TypeScript. The Rust harness also confirms rejection of the nested B-type threshold candidate exercised by the TypeScript negative test. Coverage includes five mainnet P2WSH shapes and one exact pinned Signet descriptor, not every Miniscript/Liana form or broad network parity. Accepted descriptors include a lossless syntax AST with raw source spans; the AST is not complete Miniscript semantic validation. Other networks and broader grammar parity remain unverified. No general Liana compatibility claim is made.
 
 ## Pinned semantic rejection vectors

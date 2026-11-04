@@ -1,0 +1,17 @@
+{
+  "id": "liana-v9-rust-signet-duplicate-xpub-different-fingerprint",
+  "provenance": {
+    "sourceFixture": "liana-v9-rust-signet-single-primary-recovery-vectors",
+    "lianaVersion": "9.0.0",
+    "lianaCommit": "398e622596e7530a328de3027cb2c09905f708c6",
+    "miniscriptVersion": "11.2.0",
+    "rustc": "1.80.0 (051478957 2024-07-21)",
+    "network": "signet",
+    "generator": "Replace the single recovery xpub with the spendable internal primary xpub while changing only its origin fingerprint; parse descriptor syntax, then assert LianaDescriptor::from_str returns LianaDescError::Policy(LianaPolicyError::DuplicateKey)",
+    "extendedKeySerialization": "tpub (Network::Testnet); descriptor address network Signet",
+    "secretsOmitted": true
+  },
+  "transformation": "recovery xpub/derivation path duplicates the primary internal xpub/derivation path; origin fingerprint differs",
+  "expectedRejection": "DuplicateKey",
+  "descriptor": "tr([07fd816d/48'/1'/0'/2']tpubDDvFWduSiwhW7hUbL1oMyUfcNgeSyZgHbooe1WjHyRaXYH3uUjm1xdxWXAGbQFn8QGScDg4b4a6WMGNiEAq2uQdmPDhDKPE5Dr8DX24mwd5/<0;1>/*,and_v(v:pk([deadbeef/48'/1'/0'/2']tpubDDvFWduSiwhW7hUbL1oMyUfcNgeSyZgHbooe1WjHyRaXYH3uUjm1xdxWXAGbQFn8QGScDg4b4a6WMGNiEAq2uQdmPDhDKPE5Dr8DX24mwd5/<0;1>/*),older(36)))#p9tcxumr"
+}

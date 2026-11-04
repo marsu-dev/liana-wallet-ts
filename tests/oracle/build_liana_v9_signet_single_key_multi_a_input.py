@@ -9,8 +9,11 @@ LIANA_COMMIT = "398e622596e7530a328de3027cb2c09905f708c6"
 
 def build_input(source_path: Path) -> str:
     source = json.loads(source_path.read_text(encoding="utf-8"))
-    if source.get("provenance", {}).get("lianaCommit") != LIANA_COMMIT:
-        raise ValueError("source fixture is not from the pinned Liana commit")
+    if source.get("id") != "liana-v9-rust-signet-single-primary-recovery-vectors":
+        raise ValueError("unexpected source fixture id")
+    provenance = source.get("provenance", {})
+    if provenance.get("lianaCommit") != LIANA_COMMIT or provenance.get("network") != "signet":
+        raise ValueError("source fixture must be the pinned Signet vector")
     body = source.get("multipathDescriptorBody", "")
     if body.count("v:pk(") != 1:
         raise ValueError("expected exactly one single-key recovery pk() expression")

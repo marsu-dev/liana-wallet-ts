@@ -45,8 +45,11 @@ def parse_vectors(path: Path) -> tuple[str, dict[str, dict[str, dict[str, str]]]
 
 def build_fixture(source_path: Path, input_path: Path, vectors_path: Path) -> dict:
     source = json.loads(source_path.read_text(encoding="utf-8"))
-    if source.get("provenance", {}).get("lianaCommit") != LIANA_COMMIT:
-        raise ValueError("source fixture is not from the pinned Liana commit")
+    provenance = source.get("provenance", {})
+    if source.get("id") != "liana-v9-rust-signet-single-primary-recovery-vectors":
+        raise ValueError("unexpected source fixture id")
+    if provenance.get("lianaCommit") != LIANA_COMMIT or provenance.get("network") != "signet":
+        raise ValueError("source fixture must be the pinned Signet vector")
     input_body = input_path.read_text(encoding="utf-8").strip()
     if input_body.count("v:multi_a(1,") != 1 or "older(36)" not in input_body:
         raise ValueError("input must be the single-key multi_a(1,key), older(36) mutation")

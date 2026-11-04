@@ -34,6 +34,12 @@ const rustSignetSingleKeyMultiAFixture = JSON.parse(readFileSync(resolve('tests/
   descriptor: string;
   expected: Record<'receive' | 'change', Record<string, { address: string; scriptPubKey: string }>>;
 };
+const rustSignetDuplicateXpubFixture = JSON.parse(readFileSync(resolve('tests/fixtures/liana-v9-rust-signet-duplicate-xpub.json'), 'utf8')) as {
+  provenance: { sourceFixture: string; lianaCommit: string; miniscriptVersion: string; network: string; rustc: string };
+  transformation: string;
+  expectedRejection: string;
+  descriptor: string;
+};
 
 const legacyWshFixture = JSON.parse(readFileSync(resolve('tests/fixtures/liana-v9-rust-legacy-wsh.json'), 'utf8')) as {
   provenance: { lianaCommit: string; miniscriptVersion: string; network: string };
@@ -191,8 +197,17 @@ describe('descriptor primitives', () => {
     expect(malformedBody.slice(recoveryStart)).not.toContain('/<0;1>/*');
     expect(() => parseLianaDescriptor(descriptorWithBody(malformedBody), 'signet')).toThrowError(expect.objectContaining({ code: 'INVALID_DESCRIPTOR' }));
   });
-  it('rejects duplicate xpub derivation identity across primary and recovery paths despite different fingerprints', () => {
-    const body = rustSignetSinglePrimaryFixture.multipathDescriptorBody;
+  it('matches the pinned DuplicateKey rejection when origin fingerprints differ', () => {
+    expect(rustSignetDuplicateXpubFixture.provenance).toMatchObject({
+      sourceFixture: 'liana-v9-rust-signet-single-primary-recovery-vectors',
+      lianaCommit: '398e622596e7530a328de3027cb2c09905f708c6',
+      miniscriptVersion: '11.2.0',
+      network: 'signet',
+      rustc: '1.80.0 (051478957 2024-07-21)',
+    });
+    expect(rustSignetDuplicateXpubFixture.expectedRejection).toBe('DuplicateKey');
+    expect(rustSignetDuplicateXpubFixture.transformation).toContain('origin fingerprint differs');
+    const body = splitDescriptorChecksum(rustSignetDuplicateXpubFixture.descriptor).body;
     const multipathSuffix = '/<0;1>/*';
     const internalStart = body.indexOf('[');
     const internalEnd = body.indexOf(multipathSuffix, internalStart) + multipathSuffix.length;
@@ -206,7 +221,8 @@ describe('descriptor primitives', () => {
     const malformedBody = `${body.slice(0, recoveryKeyStart)}${duplicateRecoveryKey}${body.slice(recoveryKeyEnd)}`;
     expect(duplicateRecoveryKey).not.toBe(internalKey);
     expect(duplicateRecoveryKey.slice(9)).toBe(internalKey.slice(9));
-    expect(() => parseLianaDescriptor(descriptorWithBody(malformedBody), 'signet')).toThrowError(expect.objectContaining({ code: 'INVALID_DESCRIPTOR' }));
+    expect(rustSignetDuplicateXpubFixture.descriptor).toBe(descriptorWithBody(malformedBody));
+    expect(() => parseLianaDescriptor(rustSignetDuplicateXpubFixture.descriptor, 'signet')).toThrowError(expect.objectContaining({ code: 'INVALID_DESCRIPTOR' }));
   });
   it('matches the pinned Liana Rust vector for a single-key multi_a recovery', () => {
     expect(rustSignetSingleKeyMultiAFixture.provenance).toMatchObject({
