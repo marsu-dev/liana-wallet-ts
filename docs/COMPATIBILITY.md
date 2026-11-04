@@ -32,6 +32,8 @@ The TypeScript test suite compares all twenty mainnet Taproot address/script pai
 
 `tests/fixtures/liana-v9-rust-policy-rejections.json` contains two valid Miniscript/Taproot descriptors which pinned Liana v9 rejects as incompatible policies: one has a hashlock inside a recovery path, the other constrains a primary tree leaf by a hashlock. The Rust harness asserts the exact Liana rejection message before emitting either fixture. The TypeScript importer rejects them too. This guards against classifying any leaf that merely contains `older()` or an originated key as a valid Liana path. It does not establish a complete Miniscript semantic parser: supported Taproot leaves remain key-only (`pk`/`multi_a`) primary leaves and key-only recovery policies paired with one block-based `older()`.
 
+A separate source-derived regression test mutates a valid Rust Signet fixture so its recovery signer has a fixed branch while another key remains multipath. The pinned `DescKeyChecker::check` requires every Liana signer to be a `MultiXPub`, and `unspendable_internal_xpub` also fails when a TapTree key is not multipath. The TypeScript importer now rejects that mixed form while retaining the fixed-branch community receive/change descriptors that have no multipath anywhere. This mutated case is not a recorded Rust output fixture; it is a test of the pinned source contract, not an oracle vector.
+
 ## Validation requirements
 
 - Verify the stored descriptor checksums before using fixtures.

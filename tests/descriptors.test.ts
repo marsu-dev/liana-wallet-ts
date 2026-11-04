@@ -172,6 +172,18 @@ describe('descriptor primitives', () => {
     expect(body).toContain('/<0;1>/*');
     expect(() => parseLianaDescriptor(malformed, 'signet')).toThrowError(expect.objectContaining({ code: 'INVALID_DESCRIPTOR' }));
   });
+  it('rejects a fixed-branch recovery signer inside a multipath Taproot descriptor', () => {
+    const body = rustSignetSinglePrimaryFixture.multipathDescriptorBody;
+    const recoveryStart = body.indexOf('and_v(');
+    const recoveryBranch = body.indexOf('/<0;1>/*', recoveryStart);
+    expect(recoveryStart).toBeGreaterThan(0);
+    expect(recoveryBranch).toBeGreaterThan(recoveryStart);
+    const malformedBody = `${body.slice(0, recoveryBranch)}/0/*${body.slice(recoveryBranch + '/<0;1>/*'.length)}`;
+    expect(body.slice(0, recoveryStart)).toContain('/<0;1>/*');
+    expect(malformedBody.slice(recoveryStart)).toContain('/0/*');
+    expect(malformedBody.slice(recoveryStart)).not.toContain('/<0;1>/*');
+    expect(() => parseLianaDescriptor(descriptorWithBody(malformedBody), 'signet')).toThrowError(expect.objectContaining({ code: 'INVALID_DESCRIPTOR' }));
+  });
   it('continues to import the fixed-branch community receive/change descriptors', () => {
     expect(parseLianaDescriptor(fixture.receive.descriptor, 'signet').network).toBe('signet');
     expect(parseLianaDescriptor(fixture.change.descriptor, 'signet').network).toBe('signet');

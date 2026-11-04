@@ -54,6 +54,7 @@ function validateLianaTaprootPolicy(body: string): void {
   if (!tr) throw new WalletDerivationError('INVALID_DESCRIPTOR', 'Only Liana Taproot tr() descriptors are supported');
   if (!tr[2]) throw new WalletDerivationError('INVALID_DESCRIPTOR', 'Liana Taproot descriptors require a recovery TapTree');
   const leaves = tapTreeLeaves(tr[2]);
+  const hasMultipath = body.includes('<');
   const recoveryLeaves = leaves.filter((leaf) => /\bolder\s*\(/.test(leaf));
   if (recoveryLeaves.length === 0) throw new WalletDerivationError('INVALID_DESCRIPTOR', 'Liana Taproot descriptors require at least one relative-timelocked recovery path');
   const recoveryTimelocks = new Set<number>();
@@ -68,7 +69,7 @@ function validateLianaTaprootPolicy(body: string): void {
       ? recovery.args[0]!.slice(2)
       : '';
     const older = recovery?.name === 'and_v' && recovery.args.length === 2 ? descriptorCall(recovery.args[1]!) : undefined;
-    if (!isLianaTaprootKeyPolicy(keyExpression) || older?.name !== 'older' || older.args.length !== 1 || !isDecimalToken(older.args[0]!)) {
+    if (!isLianaTaprootKeyPolicy(keyExpression, hasMultipath) || older?.name !== 'older' || older.args.length !== 1 || !isDecimalToken(older.args[0]!)) {
       throw new WalletDerivationError('INVALID_DESCRIPTOR', 'Liana Taproot recovery paths must combine a key-only signer policy with exactly one older() timelock');
     }
     if (recoveryTimelocks.has(timelock)) throw new WalletDerivationError('INVALID_DESCRIPTOR', 'Liana recovery paths must have distinct relative timelocks');
@@ -76,13 +77,12 @@ function validateLianaTaprootPolicy(body: string): void {
     if (!/(?:xpub|tpub)[1-9A-HJ-NP-Za-km-z]+/.test(leaf)) throw new WalletDerivationError('INVALID_DESCRIPTOR', 'Each Liana recovery path must contain at least one signer key');
     rejectDuplicateOrigins(originFingerprints(leaf), 'recovery');
   }
-  const hasMultipath = body.includes('<');
   const numsInternal = /^(?:xpub|tpub)[1-9A-HJ-NP-Za-km-z]+\/<0;1>\/\*$/.test(tr[1]!);
   if (hasMultipath && !numsInternal && !isDescriptorXpub(tr[1]!)) {
     throw new WalletDerivationError('INVALID_DESCRIPTOR', 'A spendable Liana Taproot internal key must be an originated multipath xpub with two normal derivation choices and an unhardened wildcard');
   }
   const primaryLeaves = leaves.filter((leaf) => !/\bolder\s*\(/.test(leaf));
-  if (primaryLeaves.some((leaf) => !isLianaTaprootKeyPolicy(leaf))) {
+  if (primaryLeaves.some((leaf) => !isLianaTaprootKeyPolicy(leaf, hasMultipath))) {
     throw new WalletDerivationError('INVALID_DESCRIPTOR', 'Liana Taproot primary leaves must be key-only policies');
   }
   if (numsInternal && primaryLeaves.length === 0) {
@@ -155,12 +155,13 @@ function isLianaKeyPolicy(expression: string): boolean {
   }
   return false;
 }
-function isLianaTaprootKeyPolicy(expression: string): boolean {
+function isLianaTaprootKeyPolicy(expression: string, requireMultipath: boolean): boolean {
+  const isSignerKey = requireMultipath ? isDescriptorXpub : isLianaTaprootDescriptorKey;
   const call = descriptorCall(expression);
-  if (call?.name === 'pk') return call.args.length === 1 && isLianaTaprootDescriptorKey(call.args[0]!);
+  if (call?.name === 'pk') return call.args.length === 1 && isSignerKey(call.args[0]!);
   if (call?.name === 'multi_a') {
     const threshold = call.args[0]!;
-    return call.args.length >= 3 && isDecimalToken(threshold) && Number(threshold) >= 1 && Number(threshold) <= call.args.length - 1 && call.args.slice(1).every(isLianaTaprootDescriptorKey);
+    return call.args.length >= 3 && isDecimalToken(threshold) && Number(threshold) >= 1 && Number(threshold) <= call.args.length - 1 && call.args.slice(1).every(isSignerKey);
   }
   return false;
 }
