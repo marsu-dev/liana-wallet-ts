@@ -21,6 +21,10 @@ A watch-only TypeScript library for importing supported Liana Bitcoin descriptor
 - Check address and script outputs before integrating a descriptor into a wallet service.
 - Batch-generate addresses for a wallet-import or recovery workflow.
 
+## Demo
+
+Try the live browser demo: [Liana Wallet TS on GitHub Pages](https://marsu-dev.github.io/liana-wallet-ts/). Address links open the corresponding transaction history on [mempool.space](https://mempool.space/) (mainnet, testnet and signet).
+
 ## Installation
 
 This package is not published to npm yet. To use a local checkout, build it first and install the directory from your application:
