@@ -2,6 +2,8 @@
 
 A watch-only TypeScript library for importing supported Liana Bitcoin descriptors and deriving wallet addresses and `scriptPubKey`s. It also provides BIP32/BIP39 public-key utilities and a small command-line interface.
 
+**Live demo:** https://marsu-dev.github.io/liana-wallet-ts/
+
 > **Compatibility is deliberately bounded.** This library does not claim general Liana or Miniscript compatibility. See [Compatibility](docs/COMPATIBILITY.md) for the exact tested forms and vectors.
 
 ## Features
