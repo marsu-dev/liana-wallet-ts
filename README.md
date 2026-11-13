@@ -29,7 +29,7 @@ Try the live browser demo: [Liana Wallet TS on GitHub Pages](https://marsu-dev.g
 
 ## Installation
 
-This package has not been published to npm yet. To use a local checkout, build it first and install the directory from your application:
+To use a local checkout, build it first and install the directory from your application:
 
 ```sh
 # In the liana-wallet-ts checkout
