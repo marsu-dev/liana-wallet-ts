@@ -29,7 +29,7 @@ Try the live browser demo: [Liana Wallet TS on GitHub Pages](https://marsu-dev.g
 
 ## Installation
 
-This package is not published to npm yet. To use a local checkout, build it first and install the directory from your application:
+This package has not been published to npm yet. To use a local checkout, build it first and install the directory from your application:
 
 ```sh
 # In the liana-wallet-ts checkout
@@ -41,6 +41,24 @@ npm install /absolute/path/to/liana-wallet-ts
 ```
 
 Requires Node.js 20.19 or newer to build the package or run its CLI. Browser applications use the package's browser ESM export and do not need Node.js at runtime; use a bundler that honors the `browser` export condition/field. `npm run build` creates `dist/browser/index.js`.
+
+### Publish to npm
+
+The package is configured for a public npm release. From a fresh clone on your own computer, with Node.js 20.19+ and npm installed:
+
+```sh
+git clone https://github.com/marsu-dev/liana-wallet-ts.git
+cd liana-wallet-ts
+npm ci
+npm run typecheck
+npm test
+npm pack --dry-run
+npm login
+npm whoami
+npm publish
+```
+
+`npm publish` runs `prepublishOnly`, which repeats the typecheck and tests and creates the Node.js and browser builds before packaging. The package is unscoped and `publishConfig.access` is set to `public`. The first release is currently `0.1.0`; subsequent releases must use a new version (`npm version patch`, `minor`, or `major`) before publishing. Never commit an npm token or put one in the repository’s `.npmrc`.
 
 ## Usage
 

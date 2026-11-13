@@ -1,9 +1,22 @@
 {
   "name": "liana-wallet-ts",
   "version": "0.1.0",
-  "description": "Watch-only TypeScript derivation for Liana Bitcoin wallets",
+  "description": "Watch-only TypeScript library for importing supported Liana Bitcoin descriptors and deriving addresses and scriptPubKeys.",
+  "author": "MarsuDev <mmarsu@gmail.com>",
   "license": "MIT",
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/marsu-dev/liana-wallet-ts.git"
+  },
+  "homepage": "https://github.com/marsu-dev/liana-wallet-ts#readme",
+  "bugs": {
+    "url": "https://github.com/marsu-dev/liana-wallet-ts/issues"
+  },
+  "keywords": ["bitcoin", "liana", "bitcoin-wallet", "descriptor", "watch-only", "typescript", "segwit", "taproot"],
+  "publishConfig": {
+    "access": "public"
+  },
   "engines": {
     "node": ">=20.19.0"
   },
@@ -17,7 +30,7 @@
   "browser": "./dist/browser/index.js",
   "types": "./dist/index.d.ts",
   "bin": {
-    "liana-wallet-ts": "./dist/cli.js"
+    "liana-wallet-ts": "dist/cli.js"
   },
   "files": [
     "dist",
@@ -28,11 +41,12 @@
     "docs/TECHNICAL.md"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.json && npm run build:browser",
+    "build": "npm run clean && tsc -p tsconfig.json && npm run build:browser",
     "build:browser": "esbuild src/index.ts --bundle --platform=browser --format=esm --target=es2022 --minify --outfile=dist/browser/index.js && esbuild src/index.ts --bundle --platform=browser --format=iife --global-name=LianaWallet --target=es2022 --minify --outfile=dist/browser/liana-wallet.js",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run typecheck && npm test && npm run build",
     "clean": "rm -rf dist"
   },
   "dependencies": {
